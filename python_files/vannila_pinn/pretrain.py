@@ -55,7 +55,7 @@ elif param == 3:
 
 # Importing Data
 
-file_path = f"data\data_{param}.txt"
+file_path = f"C:\Users\GPU2\gray_scott_projects\gray_scott\data\gray_scott\data\data_{param}.txt"
 
 # Generate column names
 times = range(0, 3001, 10)
