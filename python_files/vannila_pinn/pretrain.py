@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import torch.optim as optim
 import pandas as pd
 
+print("Libraries imported successfully.")
+
 # Step 1: Define problem
 
 L = 1.0  # length of the domain
@@ -53,7 +55,7 @@ elif param == 3:
 
 # Importing Data
 
-file_path = f"data/param_{param}.txt"
+file_path = f"data/data_{param}.txt"
 
 # Generate column names
 times = range(0, 3001, 10)
@@ -72,11 +74,15 @@ df = pd.read_csv(
     names=columns
 )
 
+print(f"Data loaded from {file_path}. Shape: {df.shape}")
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
 if device.type == "cuda":
     print(torch.cuda.get_device_name(0))
+
+print("GPU available:", torch.cuda.is_available())
 
 # Sampling Data
 
