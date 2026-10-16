@@ -419,7 +419,7 @@ for p in list(u_nn.parameters()) + list(v_nn.parameters()):
     p.requires_grad_(False)
 
 n_D_steps = 7000
-optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=2e-3)
+optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=5e-3)
 sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
 
 stage_a_con_loss = []
@@ -440,7 +440,7 @@ for step in range(n_D_steps):
     optimizer_D.zero_grad()
     L.backward()
     optimizer_D.step()
-    sched_D.step()
+    # sched_D.step()
 
     if (step + 1) % 1 == 0 or step == 0:
        print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e}")
