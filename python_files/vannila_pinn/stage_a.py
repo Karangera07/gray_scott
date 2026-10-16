@@ -418,8 +418,8 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 for p in list(u_nn.parameters()) + list(v_nn.parameters()):
     p.requires_grad_(False)
 
-n_D_steps = 4000
-optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=2e-4)
+n_D_steps = 7000
+optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=2e-3)
 sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
 
 stage_a_con_loss = []
@@ -444,3 +444,28 @@ for step in range(n_D_steps):
 
     if (step + 1) % 1 == 0 or step == 0:
        print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e}")
+
+# Saving the trained models
+
+import os
+# from google.colab import drive
+# drive.mount("/content/drive")   # skip if already mounted
+
+save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\python_files\\vannila_pinn\\test"
+os.makedirs(save_dir, exist_ok=True)
+stageA_path = os.path.join(save_dir, f"uv_{n_data}_pts_stage_a.pt")
+
+torch.save({
+    "u_nn": u_nn.state_dict(),
+    "v_nn": v_nn.state_dict(),
+    "Du_nn": Du_nn.state_dict(),
+    "Dv_nn": Dv_nn.state_dict(),      # contains Dv_raw
+    "optimizer_D": optimizer_D.state_dict(),
+    "sched_D": sched_D.state_dict(),
+    "step": step + 1,                 # last finished Stage A step
+    "bounds": dict(x_min=float(x_min), x_max=float(x_max),
+                   y_min=float(y_min), y_max=float(y_max),
+                   t_min=float(t_min), t_max=float(t_max)),
+}, stageA_path)
+
+print("Saved Stage A checkpoint to", stageA_path)
