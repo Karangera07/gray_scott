@@ -418,8 +418,8 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 for p in list(u_nn.parameters()) + list(v_nn.parameters()):
     p.requires_grad_(False)
 
-n_D_steps = 7000
-optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=5e-3)
+n_D_steps = 15000
+optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=1e-2)
 sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
 
 stage_a_con_loss = []
