@@ -344,8 +344,50 @@ def pde_loss(
 
 # Loading Pretraining u and v
 
+class u_net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(3,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,1)
+        )
 
-pretrain_path = f"/content/drive/MyDrive/gray_scott/checkpoints_{param}/pretrained/uv_{n_data}_spatial_points.pt"
+    def forward(self, X):
+        # xt = torch.cat([x, y, t], dim=-1)
+        return self.network(X)
+
+class v_net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(3,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,1)
+        )
+
+    def forward(self, X):
+        # xt = torch.cat([x, y, t], dim=-1)
+        return self.network(X)
+
+
+pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\python_files\\vannila_pinn\\pretrained\\uv_{n_data}_spatial_points.pt"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -364,3 +406,41 @@ assert all(abs(ckpt["bounds"][k] - current[k]) < 1e-9 for k in current), \
     f"Bounds mismatch! saved={ckpt['bounds']} current={current}"
 
 print("Loaded pre-trained u_nn and v_nn.")
+
+# Training
+
+Du_nn = Du_net().to(device)
+Dv_nn = Dv_net().to(device)
+
+Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
+
+# freeze the pretrained u, v networks
+for p in list(u_nn.parameters()) + list(v_nn.parameters()):
+    p.requires_grad_(False)
+
+n_D_steps = 4000
+optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=2e-4)
+sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
+
+stage_a_con_loss = []
+
+print("Starting Stage A training...")
+
+for step in range(n_D_steps):
+    L,terms = pde_loss(
+        u_nn, v_nn, Du_nn,
+        X_col,
+        Dv_nn, F, k,
+        x_min, x_max,
+        y_min, y_max,
+        t_min, t_max,
+        return_terms=True
+    )
+    stage_a_con_loss.append(L.item())
+    optimizer_D.zero_grad()
+    L.backward()
+    optimizer_D.step()
+    sched_D.step()
+
+    if (step + 1) % 1 == 0 or step == 0:
+       print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e}",terms)
