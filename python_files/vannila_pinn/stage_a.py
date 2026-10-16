@@ -443,4 +443,4 @@ for step in range(n_D_steps):
     sched_D.step()
 
     if (step + 1) % 1 == 0 or step == 0:
-       print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e}",terms)
+       print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e}")
