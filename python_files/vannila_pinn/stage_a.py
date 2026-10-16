@@ -436,6 +436,9 @@ for step in range(n_D_steps):
         t_min, t_max,
         return_terms=True
     )
+
+    X_col = sample_collocation_points(N_collocation, x_min, x_max, y_min, y_max, t_min, t_max, device=device)
+
     stage_a_con_loss.append(L.item())
     optimizer_D.zero_grad()
     L.backward()
