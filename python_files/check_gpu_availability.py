@@ -1,0 +1,1 @@
+print("Hello! This script checks for GPU availability.")
