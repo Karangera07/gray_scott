@@ -644,14 +644,14 @@ for step in range(n_B_steps):
     idx = torch.randint(0, N_rows, (data_bs,), device=device)
     L_data = data_loss_norm(idx)
 
-    L_pde,terms = pde_loss(
+    L_pde = pde_loss(
         u_nn, v_nn, Du_nn,
         X_col,
         Dv_nn, F, k,
         x_min, x_max,
         y_min, y_max,
         t_min, t_max,
-        return_terms=True
+        return_terms=False
     )
 
     L = lambda_data * L_data + w_pde * L_pde
@@ -666,6 +666,6 @@ for step in range(n_B_steps):
         mse_D, L_D = du_errors()
         # hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
         if (step + 1) % 5 == 0:
-            print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e}",terms)
+            print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e}")
 
 
