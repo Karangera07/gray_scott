@@ -557,7 +557,7 @@ Dv_nn = Dv_net().to(device)
 Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 
 if fine_tuning==True:
-    pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\python_files\\vannila_pinn\\pretrained\\uv_{n_data}_spatial_points.pt"
+    pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\pretrained\\uv_{n_data}_spatial_points.pt"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
