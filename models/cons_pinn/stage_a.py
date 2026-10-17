@@ -295,7 +295,7 @@ class v_net(nn.Module):
         return self.network(X)
 
 
-pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\vannila_pinn\\pretrained\\uv_{n_data}_spatial_points.pt"
+pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\pretrained\\uv_{n_data}_spatial_points.pt"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
