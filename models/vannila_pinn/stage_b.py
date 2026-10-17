@@ -669,3 +669,30 @@ for step in range(n_B_steps):
             print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e}")
 
 
+
+# Saving the trained model
+
+import os
+
+save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\vannila_pinn\\test\\uv_dudv_{n_data}_spatial_pts_stage_b.pt"
+os.makedirs(save_dir, exist_ok=True)
+stageB_path = os.path.join(save_dir, f"uv_{n_data}_pts_stage_b.pt")
+
+torch.save({
+    "u_nn": u_nn.state_dict(),
+    "v_nn": v_nn.state_dict(),
+    "Du_nn": Du_nn.state_dict(),
+    "Dv_nn": Dv_nn.state_dict(),      # contains Dv_raw
+    # "optimizer_D": optimizer_D.state_dict(),
+    # "sched_D": sched_D.state_dict(),
+    "step": step + 1,                 # last finished Stage B step
+    # "dt_be": dt_be,
+    # "t_lo_be": t_lo_be,
+    # "sigma_u": sigma_u,
+    # "sigma_v": sigma_v,
+    "bounds": dict(x_min=float(x_min), x_max=float(x_max),
+                   y_min=float(y_min), y_max=float(y_max),
+                   t_min=float(t_min), t_max=float(t_max)),
+}, stageB_path)
+
+print("Saved Stage B checkpoint to", stageB_path)
