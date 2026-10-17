@@ -645,9 +645,9 @@ for step in range(n_B_steps):
     L_data = data_loss_norm(idx)
 
     L_pde,terms = pde_loss(
-        u_nn, v_nn, Du_net,
+        u_nn, v_nn, Du_nn,
         X_col,
-        Dv_net, F, k,
+        Dv_nn, F, k,
         x_min, x_max,
         y_min, y_max,
         t_min, t_max,
