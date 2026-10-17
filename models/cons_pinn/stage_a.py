@@ -326,7 +326,7 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 for p in list(u_nn.parameters()) + list(v_nn.parameters()):
     p.requires_grad_(False)
 
-n_D_steps = 15000
+n_D_steps = 2000
 optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=2e-4)
 sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
 
@@ -343,7 +343,7 @@ for step in range(n_D_steps):
     optimizer_D.step()
     sched_D.step()
 
-    if (step + 1) % 1 == 0 or step == 0:
+    if (step + 1) % 50 == 0 or step == 0:
        print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e} | Dv {Dv_nn.value().item():.3e} | loss_u {loss_u.item():.3e} | loss_v {loss_v.item():.3e}")
 
 # Saving the trained models
