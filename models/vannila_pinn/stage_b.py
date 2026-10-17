@@ -526,7 +526,7 @@ class v_net(nn.Module):
         return self.network(X)
 
 
-pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\python_files\\vannila_pinn\\pretrained\\uv_{n_data}_spatial_points.pt"
+pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\pretrained\\uv_{n_data}_spatial_points.pt"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -548,34 +548,41 @@ print("Loaded pre-trained u_nn and v_nn.")
 
 # Training
 
-
-u_nn  = u_net().to(device)
-v_nn  = v_net().to(device)
 Du_nn = Du_net().to(device)
 Dv_nn = Dv_net().to(device)
 
 Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 
 if fine_tuning==True:
-    pretrain_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\pretrained\\uv_{n_data}_spatial_points.pt"
 
+    stage_a_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\vannila_pinn\\checkpoints_{param}\\stage_a\\uv_dudv_{n_data}_spatial_pts_stage_a.pt"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    ckpt = torch.load(pretrain_path, map_location=device)
+    ckpt = torch.load(stage_a_path, map_location=device)
 
-    u_nn = u_net().to(device)
-    v_nn = v_net().to(device)
-    u_nn.load_state_dict(ckpt["u_nn"])
-    v_nn.load_state_dict(ckpt["v_nn"])
-
-    # Sanity check: the normalization bounds must match the ones used in pre-training
+    # Check that the normalization bounds match
     current = dict(x_min=float(x_min), x_max=float(x_max),
                 y_min=float(y_min), y_max=float(y_max),
                 t_min=float(t_min), t_max=float(t_max))
-    assert all(abs(ckpt["bounds"][k] - current[k]) < 1e-9 for k in current), \
+    assert all(abs(ckpt["bounds"][k_] - current[k_]) < 1e-9 for k_ in current), \
         f"Bounds mismatch! saved={ckpt['bounds']} current={current}"
 
-    print("Loaded pre-trained u_nn and v_nn.")
+    # Build the networks (same architecture as when saved)
+    u_nn  = u_net().to(device)          # or ScaledMLP().to(device) if you use that class
+    v_nn  = v_net().to(device)          # or ScaledMLP().to(device)
+    Du_nn = Du_net().to(device)
+    Dv_nn = Dv_net().to(device)
+
+    u_nn.load_state_dict(ckpt["u_nn"])
+    v_nn.load_state_dict(ckpt["v_nn"])
+    Du_nn.load_state_dict(ckpt["Du_nn"])
+    Dv_nn.load_state_dict(ckpt["Dv_nn"])
+
+    # Re-create the D function wrappers around the loaded networks
+    Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
+
+
+    print(f"Loaded Stage A checkpoint. Last step:", ckpt["step"])
 
 # Training
 
