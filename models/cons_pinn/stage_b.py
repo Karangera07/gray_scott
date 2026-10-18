@@ -11,7 +11,7 @@ import pandas as pd
 import math
 
 print("Libraries imported successfully.")
-fine_tuning = False  # Set to True if you want to fine-tune from Stage A
+fine_tuning = True  # Set to True if you want to fine-tune from Stage A
 
 # Step 1: Define problem
 
@@ -468,6 +468,7 @@ torch.save({
     "t_lo_be": t_lo_be,
     "sigma_u": sigma_u,
     "sigma_v": sigma_v,
+    "fine_tuned": fine_tuning,
     "bounds": dict(x_min=float(x_min), x_max=float(x_max),
                    y_min=float(y_min), y_max=float(y_max),
                    t_min=float(t_min), t_max=float(t_max)),
