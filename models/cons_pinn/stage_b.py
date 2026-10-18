@@ -11,7 +11,7 @@ import pandas as pd
 import math
 
 print("Libraries imported successfully.")
-fine_tuning = False  # Set to True if you want to fine-tune from Stage A
+fine_tuning = True  # Set to True if you want to fine-tune from Stage A
 
 # Step 1: Define problem
 
@@ -369,7 +369,7 @@ for m in (u_nn, v_nn, Du_nn, Dv_nn):
 # ---------------------------------------------------------
 n_B_steps = 15000
 data_bs = 8192            # data points per step
-N_be = 10000              # consistency-loss points per step
+N_be = 20000              # consistency-loss points per step
 lambda_data = 1.0
 lambda_pde_max = 1.0      # tune this: lower if the data loss rises, higher if D stalls
 ramp_steps = 100        # PDE weight rises linearly from 0 to lambda_pde_max
