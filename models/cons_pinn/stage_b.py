@@ -367,7 +367,7 @@ for m in (u_nn, v_nn, Du_nn, Dv_nn):
 # ---------------------------------------------------------
 # 1. Settings
 # ---------------------------------------------------------
-n_B_steps = 100
+n_B_steps = 15000
 data_bs = 8192            # data points per step
 N_be = 20000              # consistency-loss points per step
 lambda_data = 1.0
@@ -439,6 +439,9 @@ for step in range(n_B_steps):
 
         if (step + 1) % 10 == 0:
             mse_D, L_D = du_errors()
+            if L_D*100<19.0:
+                print(f"Step {step+1}: Du L={L_D*100:.2f}% < 19.0%, stopping training.")
+                break
             hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
             if (step + 1) % 10 == 0:
                 print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} "
