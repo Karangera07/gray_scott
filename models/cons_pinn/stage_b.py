@@ -357,20 +357,20 @@ if fine_tuning==True:
 # Training
 
 n_B_steps = 15000
-data_bs = 8192            # data points per step
+data_bs = 10000            # data points per step
 N_be = 10000              # consistency-loss points per step
 lambda_data = 1.0
 lambda_pde_max = 1.0      # tune this: lower if the data loss rises, higher if D stalls
-ramp_steps = 100        # PDE weight rises linearly from 0 to lambda_pde_max
+ramp_steps = 0        # PDE weight rises linearly from 0 to lambda_pde_max
 
 uv_params = list(u_nn.parameters()) + list(v_nn.parameters())
 D_params = list(Du_nn.parameters()) + list(Dv_nn.parameters())
 
 optimizer_B = torch.optim.Adam([
     {"params": uv_params, "lr": 5e-4},     # small: don't destroy the pre-trained fit
-    {"params": D_params,  "lr": 5e-4},
+    {"params": D_params,  "lr": 5e-3},
 ])
-sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_B, T_max=n_B_steps, eta_min=1e-6)
+sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_B, T_max=n_B_steps, eta_min=1e-5)
 
 # ---------------------------------------------------------
 # 2. Data loss
