@@ -437,7 +437,7 @@ for step in range(n_B_steps):
 
 import os
 
-save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test\\uv_{n_data}_spatial_pts_stage_b.pt"
+save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test"
 os.makedirs(save_dir, exist_ok=True)
 stageB_path = os.path.join(save_dir, f"uv_{n_data}_pts_stage_b.pt")
 
