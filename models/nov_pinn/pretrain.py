@@ -374,10 +374,10 @@ for epoch in range(pre_epochs):
 
 import os
 
-save_dir = fr"C:\Users\GPU2\gray_scott_projects\gray_scott\models\pretrained"   # <-- your path
+save_dir = fr"C:\Users\GPU2\gray_scott_projects\gray_scott\models\pretrained\checkpoints_{param}"   # <-- your path
 os.makedirs(save_dir, exist_ok=True)
 
-save_path = os.path.join(save_dir, f"uv_{n_data}_pts_pretrained.pt")
+save_path = os.path.join(save_dir, f"uv_{n_data}_pts_pretrained_nov.pt")
 
 torch.save({
     "u_state_dict": u_nn.state_dict(),   # includes the fixed Fourier matrix B
