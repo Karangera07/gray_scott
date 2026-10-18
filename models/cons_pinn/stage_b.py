@@ -328,7 +328,7 @@ if fine_tuning==True:
     test_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test\\uv_{n_data}_pts_stage_b.pt"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    ckpt = torch.load(test_path, map_location=device)
+    ckpt = torch.load(stage_a_path, map_location=device)
 
     # Check that the normalization bounds match
     current = dict(x_min=float(x_min), x_max=float(x_max),
