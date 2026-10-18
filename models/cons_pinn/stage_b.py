@@ -429,7 +429,7 @@ for step in range(n_B_steps):
         mse_D, L_D = du_errors()
         # hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
         if (step + 1) % 5 == 0:
-            print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e}")
+            print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} | div_u {div_u.item():.3e} | div_v {div_v.item():.3e} | Du_L {L_D:.3e}")
 
 
 
@@ -446,8 +446,8 @@ torch.save({
     "v_nn": v_nn.state_dict(),
     "Du_nn": Du_nn.state_dict(),
     "Dv_nn": Dv_nn.state_dict(),      # contains Dv_raw
-    "optimizer_D": optimizer_D.state_dict(),
-    "sched_D": sched_D.state_dict(),
+    "optimizer_B": optimizer_B.state_dict(),
+    "sched_B": sched_B.state_dict(),
     "step": step + 1,                 # last finished Stage B step
     "dt_be": dt_be,
     "t_lo_be": t_lo_be,
