@@ -326,9 +326,10 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 if fine_tuning==True:
 
     stage_a_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\cons_pinn\\checkpoints_{param}\\trained_stage_a\\uv_{n_data}_spatial_pts_stage_a.pt"
+    test_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test\\uv_{n_data}_spatial_pts_stage_b.pt"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    ckpt = torch.load(stage_a_path, map_location=device)
+    ckpt = torch.load(test_path, map_location=device)
 
     # Check that the normalization bounds match
     current = dict(x_min=float(x_min), x_max=float(x_max),
@@ -356,7 +357,7 @@ if fine_tuning==True:
 
 # Training
 
-n_B_steps = 15000
+n_B_steps = 500
 data_bs = 10000            # data points per step
 N_be = 10000              # consistency-loss points per step
 lambda_data = 1.0
@@ -425,10 +426,10 @@ for step in range(n_B_steps):
     optimizer_B.step()
     sched_B.step()
 
-    if (step + 1) % 50 == 0:
+    if (step + 1) % 10 == 0 or step == 0:
         mse_D, L_D = du_errors()
         # hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
-        if (step + 1) % 50 == 0:
+        if (step + 1) % 10 == 0 or step == 0:
             print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} | div_u {div_u.item():.3e} | div_v {div_v.item():.3e} | L_paper {L_D:.3e}")
 
 
