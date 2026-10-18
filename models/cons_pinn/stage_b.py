@@ -356,24 +356,35 @@ if fine_tuning==True:
 
 # Training
 
-n_B_steps = 500
-data_bs = 10000            # data points per step
+# ---------------------------------------------------------
+# 0. Unfreeze u, v (they were frozen in Stage A) and switch to train mode
+# ---------------------------------------------------------
+for p in list(u_nn.parameters()) + list(v_nn.parameters()):
+    p.requires_grad_(True)
+for m in (u_nn, v_nn, Du_nn, Dv_nn):
+    m.train()
+
+# ---------------------------------------------------------
+# 1. Settings
+# ---------------------------------------------------------
+n_B_steps = 5000
+data_bs = 8192            # data points per step
 N_be = 10000              # consistency-loss points per step
 lambda_data = 1.0
 lambda_pde_max = 1.0      # tune this: lower if the data loss rises, higher if D stalls
-ramp_steps = 1        # PDE weight rises linearly from 0 to lambda_pde_max
+ramp_steps = 100        # PDE weight rises linearly from 0 to lambda_pde_max
 
 uv_params = list(u_nn.parameters()) + list(v_nn.parameters())
 D_params = list(Du_nn.parameters()) + list(Dv_nn.parameters())
 
 optimizer_B = torch.optim.Adam([
     {"params": uv_params, "lr": 5e-4},     # small: don't destroy the pre-trained fit
-    {"params": D_params,  "lr": 5e-3},
+    {"params": D_params,  "lr": 5e-4},
 ])
-sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_B, T_max=n_B_steps, eta_min=1e-5)
+sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_B, T_max=n_B_steps, eta_min=1e-6)
 
 # ---------------------------------------------------------
-# 2. Data loss
+# 2. Data loss, normalized by sigma (same units as the consistency loss)
 # ---------------------------------------------------------
 def data_loss_norm(idx):
     Xu_b, Xv_b = X_u[idx], X_v[idx]
@@ -381,8 +392,8 @@ def data_loss_norm(idx):
         return torch.cat([normalize(X[:, 0:1], x_min, x_max),
                           normalize(X[:, 1:2], y_min, y_max),
                           normalize(X[:, 2:3], t_min, t_max)], dim=1)
-    lu = torch.mean(((u_nn(norm_in(Xu_b)) - U_true[idx])) ** 2)
-    lv = torch.mean(((v_nn(norm_in(Xv_b)) - V_true[idx])) ** 2)
+    lu = torch.mean(((u_nn(norm_in(Xu_b)) - U_true[idx]) / sigma_u) ** 2)
+    lv = torch.mean(((v_nn(norm_in(Xv_b)) - V_true[idx]) / sigma_v) ** 2)
     return lu + lv
 
 # ---------------------------------------------------------
@@ -404,32 +415,42 @@ def du_errors():
 # ---------------------------------------------------------
 # 4. Training loop
 # ---------------------------------------------------------
-# hist = {"data": [], "pde": [], "Du_L": []}
+hist = {"data": [], "pde": [], "Du_L": []}
 N_rows = X_u.shape[0]
 
-for step in range(n_B_steps):
+for i in range(3):
+    print(f"Stage B training, run {i+1}/3")
+    sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer_B,
+        T_max=n_B_steps,
+        eta_min=1e-5
+    )
+    for step in range(n_B_steps):
+        if i==0:
+            w_pde = lambda_pde_max * min(1.0, (step + 1) / ramp_steps)
 
-    w_pde = lambda_pde_max * min(1.0, (step + 1) / ramp_steps)
+        idx = torch.randint(0, N_rows, (data_bs,), device=device)
+        L_data = data_loss_norm(idx)
 
-    idx = torch.randint(0, N_rows, (data_bs,), device=device)
-    L_data = data_loss_norm(idx)
+        div_u, div_v, loss_u, loss_v, L_pde = be_consistency_loss(u_nn, v_nn, Du_fn, Dv_fn, F, k,
+                                    N_be, dt_be, sigma_u, sigma_v, t_lo=t_lo_be)
 
-    div_u, div_v, loss_u,loss_v,L_pde = be_consistency_loss(u_nn, v_nn, Du_fn, Dv_fn, F, k, 10000, dt_be,
-                                sigma_u, sigma_v, t_lo=t_lo_be)
+        L = lambda_data * L_data + w_pde * L_pde
 
-    L = lambda_data * L_data + w_pde * L_pde
+        optimizer_B.zero_grad()
+        L.backward()
+        torch.nn.utils.clip_grad_norm_(uv_params + D_params, 1.0)
+        optimizer_B.step()
+        sched_B.step()
 
-    optimizer_B.zero_grad()
-    L.backward()
-    torch.nn.utils.clip_grad_norm_(uv_params + D_params, 1.0)
-    optimizer_B.step()
-    sched_B.step()
+        if (step + 1) % 50 == 0:
+            mse_D, L_D = du_errors()
+            hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
+            if (step + 1) % 50 == 0:
+                print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} "
+                    f"| w_pde {w_pde:.2f} | Du MSE {mse_D:.2e} | Du L {L_D*100:.1f}% "
+                    f"| Dv {Dv_nn.value().item():.3e}")
 
-    if (step + 1) % 10 == 0 or step == 0:
-        mse_D, L_D = du_errors()
-        # hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
-        if (step + 1) % 10 == 0 or step == 0:
-            print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} | div_u {div_u.item():.3e} | div_v {div_v.item():.3e} | L_paper {L_D:.3e}")
 
 
 
