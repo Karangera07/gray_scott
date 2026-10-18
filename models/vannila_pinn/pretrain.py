@@ -336,3 +336,22 @@ for epoch in range(pre_epochs):
               f"v MSE {tot_v.item()/n_pre:.3e} (var {V_true.var().item():.2e})")
 
 
+import os
+
+save_dir = fr"C:\Users\GPU2\gray_scott_projects\gray_scott\models\pretrained\checkpoints_{param}"   # <-- your path
+os.makedirs(save_dir, exist_ok=True)
+
+save_path = os.path.join(save_dir, f"uv_{n_data}_pts_pretrained.pt")
+
+torch.save({
+    "u_nn": u_nn.state_dict(),
+    "v_nn": v_nn.state_dict(),
+    # saved so you can check that the normalization matches when loading
+    "bounds": dict(x_min=float(x_min), x_max=float(x_max),
+                   y_min=float(y_min), y_max=float(y_max),
+                   t_min=float(t_min), t_max=float(t_max)),
+}, save_path)
+
+print(f"Model saved to {save_path}")
+
+
