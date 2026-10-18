@@ -367,7 +367,7 @@ for m in (u_nn, v_nn, Du_nn, Dv_nn):
 # ---------------------------------------------------------
 # 1. Settings
 # ---------------------------------------------------------
-n_B_steps = 5000
+n_B_steps = 15000
 data_bs = 8192            # data points per step
 N_be = 10000              # consistency-loss points per step
 lambda_data = 1.0
@@ -418,18 +418,17 @@ def du_errors():
 hist = {"data": [], "pde": [], "Du_L": []}
 N_rows = X_u.shape[0]
 
-for i in range(3):
-    print(f"Stage B training, run {i+1}/3")
-
-    # Explicitly restore the initial learning rates
-    optimizer_B.param_groups[0]["lr"] = 5e-4
-    optimizer_B.param_groups[1]["lr"] = 5e-3
-
-    sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer_B,
-        T_max=n_B_steps,
-        eta_min=1e-5
-    )
+for i in range(2):
+    display_step = 50
+    print(f"Stage B training, run {i+1}/2")
+    if i==1:
+        n_B_steps = 500
+        optimizer_B = torch.optim.Adam([
+            {"params": uv_params, "lr": 5e-4},     # small: don't destroy the pre-trained fit
+            {"params": D_params,  "lr": 5e-4},
+        ])
+        sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_B, T_max=n_B_steps, eta_min=1e-6)
+        display_step = 10
     for step in range(n_B_steps):
         if i==0:
             w_pde = lambda_pde_max * min(1.0, (step + 1) / ramp_steps)
@@ -448,10 +447,10 @@ for i in range(3):
         optimizer_B.step()
         sched_B.step()
 
-        if (step + 1) % 50 == 0:
+        if (step + 1) % display_step == 0:
             mse_D, L_D = du_errors()
             hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
-            if (step + 1) % 50 == 0:
+            if (step + 1) % display_step == 0:
                 print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} "
                     f"| w_pde {w_pde:.2f} | Du MSE {mse_D:.2e} | Du L {L_D*100:.1f}% "
                     f"| Dv {Dv_nn.value().item():.3e}")
