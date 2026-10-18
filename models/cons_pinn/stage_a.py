@@ -326,7 +326,7 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 for p in list(u_nn.parameters()) + list(v_nn.parameters()):
     p.requires_grad_(False)
 
-n_D_steps = 2000
+n_D_steps = 4000
 optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=2e-4)
 sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
 
@@ -352,7 +352,7 @@ import os
 # from google.colab import drive
 # drive.mount("/content/drive")   # skip if already mounted
 
-save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\vannila_pinn\\test"
+save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test"
 os.makedirs(save_dir, exist_ok=True)
 stageA_path = os.path.join(save_dir, f"uv_{n_data}_pts_stage_a.pt")
 
