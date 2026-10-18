@@ -420,6 +420,11 @@ N_rows = X_u.shape[0]
 
 for i in range(3):
     print(f"Stage B training, run {i+1}/3")
+
+    # Explicitly restore the initial learning rates
+    optimizer_B.param_groups[0]["lr"] = 5e-4
+    optimizer_B.param_groups[1]["lr"] = 5e-3
+
     sched_B = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer_B,
         T_max=n_B_steps,
