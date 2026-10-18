@@ -31,7 +31,7 @@ output_dim = 1  # C only
 
 # Case 3 - F = 0.018 k = 0.051
 
-param = 1
+param = 2
 n_data = 10000
 
 F1 = 0.037
