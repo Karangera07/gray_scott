@@ -367,7 +367,7 @@ for m in (u_nn, v_nn, Du_nn, Dv_nn):
 # ---------------------------------------------------------
 # 1. Settings
 # ---------------------------------------------------------
-n_B_steps = 15000
+n_B_steps = 100
 data_bs = 8192            # data points per step
 N_be = 20000              # consistency-loss points per step
 lambda_data = 1.0
@@ -437,10 +437,10 @@ for step in range(n_B_steps):
         optimizer_B.step()
         sched_B.step()
 
-        if (step + 1) % 100 == 0:
+        if (step + 1) % 10 == 0:
             mse_D, L_D = du_errors()
             hist["data"].append(L_data.item()); hist["pde"].append(L_pde.item()); hist["Du_L"].append(L_D)
-            if (step + 1) % 100 == 0:
+            if (step + 1) % 10 == 0:
                 print(f"step {step+1}/{n_B_steps} | data {L_data.item():.3e} | pde {L_pde.item():.3e} "
                     f"| w_pde {w_pde:.2f} | Du MSE {mse_D:.2e} | Du L {L_D*100:.1f}% "
                     f"| Dv {Dv_nn.value().item():.3e}")
