@@ -11,7 +11,7 @@ import pandas as pd
 import math
 
 print("Libraries imported successfully.")
-fine_tuning = True  # Set to True if you want to fine-tune from Stage A
+fine_tuning = False  # Set to True if you want to fine-tune from Stage A
 
 # Step 1: Define problem
 
