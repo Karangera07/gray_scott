@@ -32,7 +32,7 @@ output_dim = 1  # C only
 # Case 3 - F = 0.018 k = 0.051
 
 param = 1
-n_data = 10000
+n_data = 1000
 
 F1 = 0.037
 k1 = 0.06
@@ -368,3 +368,29 @@ for epoch in range(pre_epochs):
     if (epoch + 1) % 1 == 0:
         print(f"Epoch {epoch+1}/{pre_epochs} | "
               f"v MSE {tot_v.item()/n_pre:.3e} (var {V_true.var().item():.2e})")
+
+
+# Saving the model
+
+import os
+
+save_dir = fr"C:\Users\GPU2\gray_scott_projects\gray_scott\models\pretrained"   # <-- your path
+os.makedirs(save_dir, exist_ok=True)
+
+save_path = os.path.join(save_dir, f"uv_{n_data}_pts_pretrained.pt")
+
+torch.save({
+    "u_state_dict": u_nn.state_dict(),   # includes the fixed Fourier matrix B
+    "v_state_dict": v_nn.state_dict(),
+    "config": {
+        "n_fourier": n_fourier,
+        "sigma_x": sigma_x,
+        "sigma_y": sigma_y,
+        "sigma_t": sigma_t,
+        "param": param,
+        "F": F,
+        "k": k,
+    },
+}, save_path)
+
+print(f"Model saved to {save_path}")
