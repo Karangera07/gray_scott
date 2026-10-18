@@ -24,7 +24,7 @@ t_min, t_max = 0.0, 3000.0
 input_dim = 3   # (x, y, t)
 output_dim = 1  # C only
 
-param = 2
+param = 3
 n_data = 10000
 N_collocation = 20000
 
