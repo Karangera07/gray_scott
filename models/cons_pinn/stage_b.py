@@ -11,7 +11,7 @@ import pandas as pd
 import math
 
 print("Libraries imported successfully.")
-fine_tuning = True  # Set to True if you want to fine-tune from Stage A
+fine_tuning = False  # Set to True if you want to fine-tune from Stage A
 
 # Step 1: Define problem
 
@@ -60,7 +60,6 @@ def sample_collocation_points(N_col, x_min, x_max, y_min, y_max, t_min, t_max,de
     t = torch.rand(N_col, 1, device=device) * (t_max - t_min) + t_min
     return torch.cat([x, y, t], dim=1)
 
-X_col = sample_collocation_points(N_collocation, x_min, x_max, y_min, y_max, t_min, t_max, device=device)
 
 # Defining gradients
 
