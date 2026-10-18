@@ -326,7 +326,7 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 if fine_tuning==True:
 
     stage_a_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\cons_pinn\\checkpoints_{param}\\trained_stage_a\\uv_{n_data}_spatial_pts_stage_a.pt"
-    test_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test\\uv_{n_data}_spatial_pts_stage_b.pt"
+    test_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test\\uv_{n_data}_pts_stage_b.pt"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ckpt = torch.load(test_path, map_location=device)
