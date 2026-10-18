@@ -24,7 +24,7 @@ t_min, t_max = 0.0, 3000.0
 input_dim = 3   # (x, y, t)
 output_dim = 1  # C only
 
-param = 1
+param = 2
 n_data = 10000
 N_collocation = 20000
 
@@ -324,7 +324,7 @@ Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
 
 if fine_tuning==True:
 
-    stage_a_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\cons_pinn\\checkpoints_{param}\\trained_stage_a\\uv_{n_data}_spatial_pts_stage_a.pt"
+    stage_a_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\cons_pinn\\checkpoints_{param}\\trained_stage_a\\uv_{n_data}_pts_stage_a.pt"
     test_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test\\uv_{n_data}_pts_stage_b.pt"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
