@@ -116,11 +116,11 @@ def normalize(x, xmin, xmax):
 # sigma is set per input dimension (x, y, t) so space and time can have
 # different frequency content.
 
-n_fourier = 64                    # number of random frequencies (embedding dim = 2*n_fourier)
+n_fourier = 128                    # number of random frequencies (embedding dim = 2*n_fourier)
 sigma_x, sigma_y, sigma_t = 5.0, 5.0, 2.0   # <-- tune these
 
 class FourierFeatures(nn.Module):
-    def __init__(self, in_dim=3, n_features=64, sigmas=(5.0, 5.0, 2.0), seed=0):
+    def __init__(self, in_dim=3, n_features=128, sigmas=(5.0, 5.0, 2.0), seed=0):
         super().__init__()
         g = torch.Generator().manual_seed(seed)
         B = torch.randn(in_dim, n_features, generator=g)
