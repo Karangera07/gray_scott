@@ -361,7 +361,7 @@ data_bs = 10000            # data points per step
 N_be = 10000              # consistency-loss points per step
 lambda_data = 1.0
 lambda_pde_max = 1.0      # tune this: lower if the data loss rises, higher if D stalls
-ramp_steps = 0        # PDE weight rises linearly from 0 to lambda_pde_max
+ramp_steps = 1        # PDE weight rises linearly from 0 to lambda_pde_max
 
 uv_params = list(u_nn.parameters()) + list(v_nn.parameters())
 D_params = list(Du_nn.parameters()) + list(Dv_nn.parameters())
