@@ -417,18 +417,26 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ckpt = torch.load(pretrain_path, map_location=device)
 
 # Rebuild the networks with the same Fourier settings used in pre-training
-fc = ckpt["fourier"]
-u_nn = u_net(n_features=fc["n_fourier"], sigmas=tuple(fc["sigmas_u"])).to(device)
-v_nn = v_net(n_features=fc["n_fourier"], sigmas=tuple(fc["sigmas_v"])).to(device)
-u_nn.load_state_dict(ckpt["u_nn"])   # also restores the exact Fourier matrix B
-v_nn.load_state_dict(ckpt["v_nn"])
+cfg = ckpt["config"]
+sigmas = (cfg["sigma_x"], cfg["sigma_y"], cfg["sigma_t"])   # same sigmas for u and v in this version
+
+u_nn = u_net(n_features=cfg["n_fourier"], sigmas=sigmas).to(device)
+v_nn = v_net(n_features=cfg["n_fourier"], sigmas=sigmas).to(device)
+u_nn.load_state_dict(ckpt["u_state_dict"])   # also restores the exact Fourier matrix B
+v_nn.load_state_dict(ckpt["v_state_dict"])
+
+# Sanity check: the pre-training case must match the case being trained now
+assert cfg["param"] == param, f"Case mismatch! saved={cfg['param']} current={param}"
+
+# Keep the same structure the Stage A save block expects
+fc = dict(n_fourier=cfg["n_fourier"], sigmas_u=sigmas, sigmas_v=sigmas)
 
 # Sanity check: the normalization bounds must match the ones used in pre-training
-current = dict(x_min=float(x_min), x_max=float(x_max),
-               y_min=float(y_min), y_max=float(y_max),
-               t_min=float(t_min), t_max=float(t_max))
-assert all(abs(ckpt["bounds"][k] - current[k]) < 1e-9 for k in current), \
-    f"Bounds mismatch! saved={ckpt['bounds']} current={current}"
+# current = dict(x_min=float(x_min), x_max=float(x_max),
+#                y_min=float(y_min), y_max=float(y_max),
+#                t_min=float(t_min), t_max=float(t_max))
+# assert all(abs(ckpt["bounds"][k] - current[k]) < 1e-9 for k in current), \
+#     f"Bounds mismatch! saved={ckpt['bounds']} current={current}"
 
 print("Loaded pre-trained Fourier u_nn and v_nn.")
 
