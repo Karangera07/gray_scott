@@ -1,0 +1,501 @@
+# Importing Libraries
+
+import torch
+import torch.nn as nn
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Use 'Agg' backend for non-interactive plotting
+import matplotlib.pyplot as plt
+import torch.optim as optim
+import pandas as pd
+import math
+
+print("Libraries imported successfully.")
+
+# Step 1: Define problem
+
+L = 1.0  # length of the domain
+x_min, x_max = 0.0, L
+y_min, y_max = 0.0, L
+t_min, t_max = 0.0, 3000.0
+
+# dimensionality
+input_dim = 3   # (x, y, t)
+output_dim = 1  # C only
+
+param = 1
+n_data = 10000
+N_collocation = 20000
+
+F1 = 0.037
+k1 = 0.06
+
+F2 = 0.014
+k2 = 0.045
+
+F3 = 0.018
+k3 = 0.051
+
+if param == 1:
+    F = F1
+    k = k1
+elif param == 2:
+    F = F2
+    k = k2
+elif param == 3:
+    F = F3
+    k = k3
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
+if device.type == "cuda":
+    print(torch.cuda.get_device_name(0))
+
+# Sampling collocation points
+
+def sample_collocation_points(N_col, x_min, x_max, y_min, y_max, t_min, t_max,device="cuda"):
+    x = torch.rand(N_col, 1, device=device) * (x_max - x_min) + x_min
+    y = torch.rand(N_col, 1, device=device) * (y_max - y_min) + y_min
+    t = torch.rand(N_col, 1, device=device) * (t_max - t_min) + t_min
+    return torch.cat([x, y, t], dim=1)
+
+X_col = sample_collocation_points(N_collocation, x_min, x_max, y_min, y_max, t_min, t_max, device=device)
+
+# Defining gradients
+
+def gradients(C, x):
+    return torch.autograd.grad(
+        C,
+        x,
+        grad_outputs=torch.ones_like(C),
+        create_graph=True,
+        retain_graph=True
+    )[0]
+
+# Defining NN Architecture
+
+D_SCALE = 1e-5   # characteristic magnitude of the diffusion coefficients
+
+class Du_net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.network = nn.Sequential(
+            nn.Linear(2,32),
+            nn.Tanh(),
+            nn.Linear(32,32),
+            nn.Tanh(),
+            nn.Linear(32,32),
+            nn.Tanh(),
+            nn.Linear(32,32),
+            nn.Tanh(),
+            nn.Linear(32,1)
+        )
+
+    def forward(self, X):
+        # network output is O(1); scale it and keep it positive
+        return D_SCALE * torch.nn.functional.softplus(self.network(X))
+
+
+class Dv_net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.Dv_raw = nn.Parameter(torch.tensor(1.0))   # O(1) parameter -> Dv about 1.3e-5 at init
+
+    def value(self):
+        return D_SCALE * torch.nn.functional.softplus(self.Dv_raw)
+
+    def forward(self, X):
+        return self.value() * torch.ones_like(X[:, 0:1])   # shape (N,1)
+
+
+# Defining PDE Residuals
+
+def Du_true(x, y):
+    return 2e-5 * (1.0 + torch.sin(math.pi * x) * torch.sin(math.pi * y))
+
+def Dv_true(x, y):
+    return torch.full_like(x, 1e-5)
+
+def normalize(x, xmin, xmax):
+    return 2.0 * (x - xmin) / (xmax - xmin) - 1.0
+
+def make_D_fns(Du_nn, Dv_nn):
+    def Du_fn(x, y):
+        return Du_nn(torch.cat([normalize(x, x_min, x_max), normalize(y, y_min, y_max)], dim=1))
+    def Dv_fn(x, y):
+        return Dv_nn(torch.cat([normalize(x, x_min, x_max), normalize(y, y_min, y_max)], dim=1))
+    return Du_fn, Dv_fn
+
+def div_flux(D, f, x, y):
+    """div(D grad f) in physical coordinates."""
+    f_x, f_y = torch.autograd.grad(f, [x, y], torch.ones_like(f), create_graph=True)
+    qx, qy = D * f_x, D * f_y
+    dqx = torch.autograd.grad(qx, x, torch.ones_like(qx), create_graph=True)[0]
+    dqy = torch.autograd.grad(qy, y, torch.ones_like(qy), create_graph=True)[0]
+    return dqx + dqy
+
+def pde_loss(
+    u_net, v_net, Du_net,
+    X_col,
+    Dv_net, F, k,
+    x_min, x_max,
+    y_min, y_max,
+    t_min, t_max,
+    return_terms=False
+):
+
+    # --------------------------------------------------
+    # Normalization factors
+    # --------------------------------------------------
+
+    sx = 2.0 / (x_max - x_min)
+    sy = 2.0 / (y_max - y_min)
+    st = 2.0 / (t_max - t_min)
+
+    # --------------------------------------------------
+    # Normalize collocation points
+    # --------------------------------------------------
+
+    X_raw = X_col.clone().requires_grad_(True)
+
+    x = normalize(X_raw[:, 0:1], x_min, x_max)
+    y = normalize(X_raw[:, 1:2], y_min, y_max)
+    t = normalize(X_raw[:, 2:3], t_min, t_max)
+
+    X = torch.cat([x, y, t], dim=1)
+
+    # --------------------------------------------------
+    # Network predictions
+    # --------------------------------------------------
+
+    u = u_net(X)
+    v = v_net(X)
+
+    # D = D(x,y)
+    D = Du_net(X[:, 0:2])
+    Dv = Dv_net(X[:, 0:2])
+
+    # True diffusivities at physical coordinates
+    Du_exact = Du_true(X_raw[:, 0:1], X_raw[:, 1:2])
+    Dv_exact = Dv_true(X_raw[:, 0:1], X_raw[:, 1:2])
+
+    # MSE of predicted diffusivities
+    mse_Du = torch.mean((D - Du_exact)**2)
+    mse_Dv = torch.mean((Dv - Dv_exact)**2)
+
+    # --------------------------------------------------
+    # First derivatives of u
+    # --------------------------------------------------
+
+    u_grad = torch.autograd.grad(
+        u,
+        X,
+        grad_outputs=torch.ones_like(u),
+        create_graph=True
+    )[0]
+
+    u_xn = u_grad[:, 0:1]
+    u_yn = u_grad[:, 1:2]
+    u_tn = u_grad[:, 2:3]
+
+    # Convert to physical derivatives
+    u_x = sx * u_xn
+    u_y = sy * u_yn
+    u_t = st * u_tn
+
+    # --------------------------------------------------
+    # Second derivatives of u
+    # --------------------------------------------------
+
+    u_xn_xn = torch.autograd.grad(
+        u_xn,
+        X,
+        grad_outputs=torch.ones_like(u_xn),
+        create_graph=True
+    )[0][:, 0:1]
+
+    u_yn_yn = torch.autograd.grad(
+        u_yn,
+        X,
+        grad_outputs=torch.ones_like(u_yn),
+        create_graph=True
+    )[0][:, 1:2]
+
+    # Convert to physical second derivatives
+    u_xx = sx**2 * u_xn_xn
+    u_yy = sy**2 * u_yn_yn
+
+    # --------------------------------------------------
+    # Derivatives of D(x,y)
+    # --------------------------------------------------
+
+    D_grad = torch.autograd.grad(
+        D,
+        X,
+        grad_outputs=torch.ones_like(D),
+        create_graph=True
+    )[0]
+
+    D_xn = D_grad[:, 0:1]
+    D_yn = D_grad[:, 1:2]
+
+    # Convert to physical derivatives
+    D_x = sx * D_xn
+    D_y = sy * D_yn
+
+    # --------------------------------------------------
+    # First derivatives of v
+    # --------------------------------------------------
+
+    v_grad = torch.autograd.grad(
+        v,
+        X,
+        grad_outputs=torch.ones_like(v),
+        create_graph=True
+    )[0]
+
+    v_xn = v_grad[:, 0:1]
+    v_yn = v_grad[:, 1:2]
+    v_tn = v_grad[:, 2:3]
+
+    # Physical derivatives
+    v_x = sx * v_xn
+    v_y = sy * v_yn
+    v_t = st * v_tn
+
+    # --------------------------------------------------
+    # Second derivatives of v
+    # --------------------------------------------------
+
+    v_xn_xn = torch.autograd.grad(
+        v_xn,
+        X,
+        grad_outputs=torch.ones_like(v_xn),
+        create_graph=True
+    )[0][:, 0:1]
+
+    v_yn_yn = torch.autograd.grad(
+        v_yn,
+        X,
+        grad_outputs=torch.ones_like(v_yn),
+        create_graph=True
+    )[0][:, 1:2]
+
+    # Physical second derivatives
+    v_xx = sx**2 * v_xn_xn
+    v_yy = sy**2 * v_yn_yn
+
+    # --------------------------------------------------
+    # Diffusion terms
+    # --------------------------------------------------
+
+    # div(D grad(u))
+    diffusion_u = (
+        D * (u_xx + u_yy)
+        + D_x * u_x
+        + D_y * u_y
+    )
+
+    # Dv is constant
+    diffusion_v = Dv * (v_xx + v_yy)
+
+    # --------------------------------------------------
+    # Gray-Scott reaction terms
+    # --------------------------------------------------
+
+    reaction_u = -u * v**2 + F * (1.0 - u)
+
+    reaction_v = u * v**2 - (F + k) * v
+
+    # --------------------------------------------------
+    # PDE residuals
+    # --------------------------------------------------
+
+    f_u = u_t - diffusion_u - reaction_u
+
+    f_v = v_t - diffusion_v - reaction_v
+
+    # --------------------------------------------------
+    # PDE loss
+    # --------------------------------------------------
+
+    T_scale = t_max - t_min          # measure the residual per full time span
+    loss_u = torch.mean((T_scale * f_u)**2)
+    loss_v = torch.mean((T_scale * f_v)**2)
+
+    loss_pde = loss_u + loss_v
+
+    if return_terms:
+        terms = {
+            "|u_t|": u_t.abs().mean().item(),
+            "|diff_u|": diffusion_u.abs().mean().item(),
+            "|react_u|": reaction_u.abs().mean().item(),
+            "|resid_u|": f_u.abs().mean().item(),
+            "|v_t|": v_t.abs().mean().item(),
+            "|diff_v|": diffusion_v.abs().mean().item(),
+            "|react_v|": reaction_v.abs().mean().item(),
+            "|resid_v|": f_v.abs().mean().item(),
+            "MSE_Du": mse_Du.item(),
+            "MSE_Dv": mse_Dv.item()
+        }
+        return loss_pde, terms
+
+    return loss_pde
+
+# ---------------------------------------------------------------------
+# Fourier feature networks for u and v (must match pre-training exactly)
+# ---------------------------------------------------------------------
+# gamma(X) = [sin(2*pi*X@B), cos(2*pi*X@B)],  B ~ N(0, sigma^2), FIXED (not trained)
+
+class FourierFeatures(nn.Module):
+    def __init__(self, in_dim=3, n_features=128, sigmas=(5.0, 5.0, 2.0), seed=0):
+        super().__init__()
+        g = torch.Generator().manual_seed(seed)
+        B = torch.randn(in_dim, n_features, generator=g)
+        B = B * torch.tensor(sigmas, dtype=torch.float32).view(-1, 1)
+        self.register_buffer("B", B)   # fixed; the real values are restored from the checkpoint
+
+    def forward(self, X):
+        proj = 2.0 * np.pi * X @ self.B
+        return torch.cat([torch.sin(proj), torch.cos(proj)], dim=-1)
+
+class u_net(nn.Module):
+    def __init__(self, n_features, sigmas, seed=1):
+        super().__init__()
+        self.embed = FourierFeatures(
+            in_dim=3, n_features=n_features, sigmas=sigmas, seed=seed
+        )
+        self.network = nn.Sequential(
+            nn.Linear(2 * n_features, 64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,1)
+        )
+
+    def forward(self, X):
+        # X: normalized (x, y, t) in [-1, 1]
+        return self.network(self.embed(X))
+
+class v_net(nn.Module):
+    def __init__(self, n_features, sigmas, seed=2):
+        super().__init__()
+        self.embed = FourierFeatures(
+            in_dim=3, n_features=n_features, sigmas=sigmas, seed=seed
+        )
+        self.network = nn.Sequential(
+            nn.Linear(2 * n_features, 64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,64),
+            nn.Tanh(),
+            nn.Linear(64,1)
+        )
+
+    def forward(self, X):
+        # X: normalized (x, y, t) in [-1, 1]
+        return self.network(self.embed(X))
+
+
+# Loading the pre-trained Fourier u and v
+
+pretrain_path = fr"C:\Users\GPU2\gray_scott_projects\gray_scott\models\pretrained\checkpoints_{param}\uv_{n_data}_pts_pretrained_nov.pt"   # <-- adjust if your path differs
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+ckpt = torch.load(pretrain_path, map_location=device)
+
+# Rebuild the networks with the same Fourier settings used in pre-training
+fc = ckpt["fourier"]
+u_nn = u_net(n_features=fc["n_fourier"], sigmas=tuple(fc["sigmas_u"])).to(device)
+v_nn = v_net(n_features=fc["n_fourier"], sigmas=tuple(fc["sigmas_v"])).to(device)
+u_nn.load_state_dict(ckpt["u_nn"])   # also restores the exact Fourier matrix B
+v_nn.load_state_dict(ckpt["v_nn"])
+
+# Sanity check: the normalization bounds must match the ones used in pre-training
+current = dict(x_min=float(x_min), x_max=float(x_max),
+               y_min=float(y_min), y_max=float(y_max),
+               t_min=float(t_min), t_max=float(t_max))
+assert all(abs(ckpt["bounds"][k] - current[k]) < 1e-9 for k in current), \
+    f"Bounds mismatch! saved={ckpt['bounds']} current={current}"
+
+print("Loaded pre-trained Fourier u_nn and v_nn.")
+
+# Training
+
+Du_nn = Du_net().to(device)
+Dv_nn = Dv_net().to(device)
+
+Du_fn, Dv_fn = make_D_fns(Du_nn, Dv_nn)
+
+# freeze the pretrained u, v networks
+for p in list(u_nn.parameters()) + list(v_nn.parameters()):
+    p.requires_grad_(False)
+
+n_D_steps = 15000
+optimizer_D = torch.optim.Adam(list(Du_nn.parameters()) + list(Dv_nn.parameters()), lr=1e-2)
+sched_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=n_D_steps, eta_min=1e-5)
+
+stage_a_con_loss = []
+
+print("Starting Stage A training...")
+
+for step in range(n_D_steps):
+    L,terms = pde_loss(
+        u_nn, v_nn, Du_nn,
+        X_col,
+        Dv_nn, F, k,
+        x_min, x_max,
+        y_min, y_max,
+        t_min, t_max,
+        return_terms=True
+    )
+
+    X_col = sample_collocation_points(N_collocation, x_min, x_max, y_min, y_max, t_min, t_max, device=device)
+
+    stage_a_con_loss.append(L.item())
+    optimizer_D.zero_grad()
+    L.backward()
+    optimizer_D.step()
+    # sched_D.step()
+
+    if (step + 1) % 1 == 0 or step == 0:
+       print(f"step {step+1}/{n_D_steps} | loss {L.item():.3e}")
+
+# Saving the trained models
+
+import os
+# from google.colab import drive
+# drive.mount("/content/drive")   # skip if already mounted
+
+save_dir = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\models\\test"
+os.makedirs(save_dir, exist_ok=True)
+stageA_path = os.path.join(save_dir, f"uv_{n_data}_pts_stage_a_fourier.pt")
+
+torch.save({
+    "u_nn": u_nn.state_dict(),
+    "v_nn": v_nn.state_dict(),
+    "Du_nn": Du_nn.state_dict(),
+    "Dv_nn": Dv_nn.state_dict(),      # contains Dv_raw
+    "optimizer_D": optimizer_D.state_dict(),
+    "sched_D": sched_D.state_dict(),
+    "step": step + 1,                 # last finished Stage A step
+    "bounds": dict(x_min=float(x_min), x_max=float(x_max),
+                   y_min=float(y_min), y_max=float(y_max),
+                   t_min=float(t_min), t_max=float(t_max)),
+    # needed to rebuild the Fourier networks when loading in later stages
+    "fourier": fc,
+}, stageA_path)
+
+print("Saved Stage A checkpoint to", stageA_path)
