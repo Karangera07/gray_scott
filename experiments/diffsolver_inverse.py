@@ -36,6 +36,8 @@ ap.add_argument("--k", type=float, default=None, help="override kill rate")
 ap.add_argument("--data", type=str, default=None, help="path to COMSOL txt (default data/data_{param}.txt)")
 ap.add_argument("--N", type=int, default=160, help="fine solver grid (N x N cells)")
 ap.add_argument("--horizon", type=int, default=2, help="window length in data intervals (x10 time units)")
+ap.add_argument("--order", type=int, default=4, choices=[2, 4], help="spatial order of the solver")
+ap.add_argument("--weight", type=str, default="uniform", choices=["uniform", "area"], help="data-node weights")
 ap.add_argument("--burn", type=int, default=0, help="first data intervals of each window not scored")
 ap.add_argument("--batch", type=int, default=8, help="windows per iteration")
 ap.add_argument("--t_start", type=float, default=300.0, help="earliest window start (fields flat before)")
@@ -56,7 +58,7 @@ dev = torch.device(args.device)
 F, k = FK.get(args.param, (None, None))
 F = args.F if args.F is not None else F
 k = args.k if args.k is not None else k
-out_dir = args.out or os.path.join(HERE, "results", f"diffsolver_p{args.param}_N{args.N}_H{args.horizon}{args.tag}")
+out_dir = args.out or os.path.join(HERE, "results", f"diffsolver_p{args.param}_N{args.N}_H{args.horizon}_o{args.order}_{args.weight}{args.tag}")
 os.makedirs(out_dir, exist_ok=True)
 print(f"device {dev} | case {args.param} F={F} k={k} | out {out_dir}", flush=True)
 
@@ -136,18 +138,44 @@ Du_nn, Dv_nn = Du_net().to(dev), Dv_net().to(dev)
 def grid_in(xv, yv):
     X, Y = torch.meshgrid(T32(xv), T32(yv), indexing="ij")
     return torch.stack([norm(X, xs[0], xs[-1]), norm(Y, ys[0], ys[-1])], -1)
-Xface_x = grid_in(xs[0] + np.arange(1, N) * hx, yc)   # (N-1, N): faces between cells in x
-Xface_y = grid_in(xc, ys[0] + np.arange(1, N) * hy)   # (N, N-1)
-Xcell = grid_in(xc, yc)
+if args.order == 2:
+    Xface_x = grid_in(xs[0] + np.arange(1, N) * hx, yc)   # (N-1, N): interior faces in x
+    Xface_y = grid_in(xc, ys[0] + np.arange(1, N) * hy)   # (N, N-1)
+else:   # 4th order: all faces m*h, m=0..N (walls included)
+    Xface_x = grid_in(xs[0] + np.arange(0, N + 1) * hx, yc)   # (N+1, N)
+    Xface_y = grid_in(xc, ys[0] + np.arange(0, N + 1) * hy)   # (N, N+1)
 
 # ------------------------------------------------------------------ solver
-def divflux(u, Dfx, Dfy):
-    """Finite-volume div(D grad u), zero-flux walls. u: (B,N,N)."""
+def divflux2(u, Dfx, Dfy):
+    """2nd-order finite-volume div(D grad u), zero-flux walls. u: (B,N,N)."""
     fx = Dfx * (u[:, 1:] - u[:, :-1]) / hx
     fy = Dfy * (u[:, :, 1:] - u[:, :, :-1]) / hy
     zx = torch.zeros_like(u[:, :1]); zy = torch.zeros_like(u[:, :, :1])
     return (torch.cat([fx, zx], 1) - torch.cat([zx, fx], 1)) / hx + \
            (torch.cat([fy, zy], 2) - torch.cat([zy, fy], 2)) / hy
+
+def _div4_1d(u, D, h):
+    """d/dx (D du/dx) along dim 1, 4th order. u: (B,N,M) cell centres; D: faces 0..N, shape (N+1,M)
+    or scalar. Interior face gradients (1,-27,27,-1)/24h; first faces off each wall one-sided
+    (-23,21,3,-1)/24h; wall flux = 0 (no-flux); one ghost flux beyond each wall from the cubic
+    extrapolation f_-1 = -6 f_1 + 4 f_2 - f_3 (uses f_0 = 0); then the same 4-point stencil on fluxes."""
+    gi = (u[:, :-3] - 27 * u[:, 1:-2] + 27 * u[:, 2:-1] - u[:, 3:]) / (24 * h)            # faces 2..N-2
+    g1 = (-23 * u[:, 0:1] + 21 * u[:, 1:2] + 3 * u[:, 2:3] - u[:, 3:4]) / (24 * h)        # face 1
+    gN = (23 * u[:, -1:] - 21 * u[:, -2:-1] - 3 * u[:, -3:-2] + u[:, -4:-3]) / (24 * h)   # face N-1
+    z = torch.zeros_like(g1)
+    f = D * torch.cat([z, g1, gi, gN, z], 1)                                              # faces 0..N
+    fm = -6 * f[:, 1:2] + 4 * f[:, 2:3] - f[:, 3:4]
+    fp = -6 * f[:, -2:-1] + 4 * f[:, -3:-2] - f[:, -4:-3]
+    f = torch.cat([fm, f, fp], 1)                                                         # faces -1..N+1
+    return (f[:, :-3] - 27 * f[:, 1:-2] + 27 * f[:, 2:-1] - f[:, 3:]) / (24 * h)
+
+def divflux4(u, Dfx, Dfy):
+    """4th-order conservative FD div(D grad u) with zero-flux walls. u: (B,N,N)."""
+    Dy = Dfy.T if torch.is_tensor(Dfy) else Dfy
+    return _div4_1d(u, Dfx, hx) + _div4_1d(u.transpose(1, 2), Dy, hy).transpose(1, 2)
+
+divflux = divflux2 if args.order == 2 else divflux4
+STAB = 4.0 if args.order == 2 else 49.0 / 9.0     # max eigenvalue of -d2/dx2 stencil, times h^2
 
 def rollout(u, v, Dfx, Dfy, Dv, n_sub, dt):
     for _ in range(n_sub):
@@ -156,6 +184,13 @@ def rollout(u, v, Dfx, Dfy, Dv, n_sub, dt):
                 v + dt * (Dv * divflux(v, 1.0, 1.0) + uv2 - (F + k) * v))
     return u, v
 
+def dual_widths(z):
+    w = np.zeros_like(z); w[1:] += np.diff(z) / 2; w[:-1] += np.diff(z) / 2; return w
+if args.weight == "area":   # each data node counts by the area it represents (graded mesh!)
+    Wn = np.outer(dual_widths(xs), dual_widths(ys)); Wnode = T32(Wn / Wn.mean())
+else:
+    Wnode = torch.ones(len(xs), len(ys), device=dev)
+
 to_fine = lambda A: Qx @ A @ Qy.T
 to_data = lambda A: Px @ A @ Py.T
 
@@ -163,7 +198,7 @@ def window_loss(i0):
     Dfx, Dfy = Du_nn(Xface_x)[..., 0], Du_nn(Xface_y)[..., 0]
     Dv = Dv_nn.value()
     Dmax = max(Dfx.max().item(), Dv.item())
-    lim = 1.0 / (2 * Dmax * (1 / hx**2 + 1 / hy**2))
+    lim = 2.0 / (STAB * Dmax * (1 / hx**2 + 1 / hy**2))     # forward-Euler stability limit
     n_sub = max(1, math.ceil(dt_data / (args.cfl * lim)))
     dt = dt_data / n_sub
     u, v = to_fine(Ud[i0]), to_fine(Vd[i0])
@@ -172,8 +207,8 @@ def window_loss(i0):
         u, v = torch.utils.checkpoint.checkpoint(rollout, u, v, Dfx, Dfy, Dv, n_sub, dt, use_reentrant=False)
         if j <= args.burn:      # let the interpolation error of the start snapshot decay first
             continue
-        lu = ((to_data(u) - Ud[i0 + j]) / sig_u).pow(2).mean()
-        lv = ((to_data(v) - Vd[i0 + j]) / sig_v).pow(2).mean()
+        lu = (Wnode * ((to_data(u) - Ud[i0 + j]) / sig_u).pow(2)).mean()
+        lv = (Wnode * ((to_data(v) - Vd[i0 + j]) / sig_v).pow(2)).mean()
         loss = loss + lu + lv
     return loss / (args.horizon - args.burn), n_sub
 
