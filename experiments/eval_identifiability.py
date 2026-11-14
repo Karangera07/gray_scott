@@ -20,10 +20,15 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--run", required=True, help="result folder containing D_model.pt")
 ap.add_argument("--every", type=int, default=5, help="window start stride (data intervals)")
 ap.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+ap.add_argument("--N", type=int, default=None, help="override solver grid (floor test)")
+ap.add_argument("--cfl", type=float, default=None, help="override time-step fraction (floor test)")
+ap.add_argument("--only_true", action="store_true", help="only evaluate the loss at the true D")
 a = ap.parse_args()
 dev = torch.device(a.device)
 ck = torch.load(os.path.join(a.run, "D_model.pt"), map_location=dev)
 args = argparse.Namespace(**{"synthetic": None, "order": 2, "start": "data", "burn": 0, **ck["args"]})
+if a.N: args.N = a.N
+if a.cfl: args.cfl = a.cfl
 T32 = lambda z: torch.tensor(z, dtype=torch.float32, device=dev)
 
 if args.synthetic:
@@ -38,7 +43,10 @@ xc = xs[0] + (np.arange(N) + 0.5) * hx; yc = ys[0] + (np.arange(N) + 0.5) * hy
 Qx, Qy, Px, Py = map(T32, (spline_matrix(xs, xc), spline_matrix(ys, yc), spline_matrix(xc, xs), spline_matrix(yc, ys)))
 Ud, Vd = T32(U), T32(V); sig_u, sig_v = float(U.std()), float(V.std())
 use_fine = getattr(args, "start", "data") == "fine"
-if use_fine: Ufine, Vfine = T32(syn["Ufine"]), T32(syn["Vfine"])
+if use_fine:
+    Ns = syn["Ufine"].shape[1]; xsrc = (np.arange(Ns) + 0.5) / Ns
+    R = T32(spline_matrix(xsrc, xc)) if Ns != N else torch.eye(N, device=dev)   # re-grid exact fields if N overridden
+    Ufine, Vfine = R @ T32(syn["Ufine"]) @ R.T, R @ T32(syn["Vfine"]) @ R.T
 dt_data = float(tdat[1] - tdat[0])
 
 D_SCALE = args.D_scale
@@ -84,6 +92,9 @@ def loss_of(Dfx, Dfy, Dv):
                     + ((Px @ v @ Py.T - Vd[chunk + j]) / sig_v).pow(2).mean((1, 2)).sum()).item()
     return tot / (len(starts) * (args.horizon - args.burn))
 
+if a.only_true:
+    print(f"N={N} cfl={args.cfl} order={args.order}: loss at TRUE D = {loss_of(Tr[0], Tr[1], 1e-5):.4e}")
+    sys.exit(0)
 res = {}
 for s in (0.0, 0.25, 0.5, 0.75, 1.0):   # s=0 learned, s=1 true
     Dfx = (1 - s) * L[0] + s * Tr[0]; Dfy = (1 - s) * L[1] + s * Tr[1]; Dv = (1 - s) * Dv_learned + s * 1e-5
