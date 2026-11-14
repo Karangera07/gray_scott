@@ -112,8 +112,9 @@ Ud, Vd = T32(U), T32(V)
 sig_u, sig_v = float(U.std()), float(V.std())
 if args.start == "fine":
     assert args.synthetic, "--start fine needs --synthetic"
-    assert syn["Ufine"].shape[1] == N, f"synthetic fine fields are {syn['Ufine'].shape[1]}^2, run with --N {syn['Ufine'].shape[1]}"
-    Ufine, Vfine = T32(syn["Ufine"]), T32(syn["Vfine"])
+    Ns = syn["Ufine"].shape[1]
+    R = T32(spline_matrix((np.arange(Ns) + 0.5) / Ns, xc)) if Ns != N else torch.eye(N, device=dev)
+    Ufine, Vfine = R @ T32(syn["Ufine"]) @ R.T, R @ T32(syn["Vfine"]) @ R.T   # re-grid if solver N differs
 
 # ------------------------------------------------------------------ unknowns
 D_SCALE = args.D_scale
