@@ -55,6 +55,12 @@ ap.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available(
 ap.add_argument("--synthetic", type=str, default=None, help="npz from make_synthetic.py instead of COMSOL data")
 ap.add_argument("--start", type=str, default="data", choices=["data", "fine"],
                 help="window start state: spline of the data nodes, or exact fine field (synthetic only)")
+ap.add_argument("--sensor_spacing", type=float, default=0.0,
+                help="sparse in space: observe only an evenly spaced sub-grid of nodes with this spacing (0 = all nodes)")
+ap.add_argument("--time_stride", type=int, default=1, help="sparse in time: keep every m-th snapshot")
+ap.add_argument("--time_frac", type=float, default=1.0, help="irregular in time: keep this random fraction of snapshots")
+ap.add_argument("--horizon_t", type=float, default=None,
+                help="window length in time units (default horizon*10); every kept snapshot inside is scored")
 ap.add_argument("--cache", type=str, default=None, help="npz cache dir (default experiments/cache)")
 ap.add_argument("--out", type=str, default=None)
 ap.add_argument("--tag", type=str, default="")
@@ -66,6 +72,9 @@ F, k = FK.get(args.param, (None, None))
 F = args.F if args.F is not None else F
 k = args.k if args.k is not None else k
 out_dir = args.out or os.path.join(HERE, "results", (f"synthetic_p{args.param}_start-{args.start}_N{args.N}_o{args.order}{args.tag}" if args.synthetic else f"diffsolver_p{args.param}_N{args.N}_H{args.horizon}_o{args.order}_{args.weight}{args.tag}"))
+sparse_tag = ("" if (args.sensor_spacing <= 0 and args.time_stride == 1 and args.time_frac >= 1) else
+              f"_sp{args.sensor_spacing:g}_ts{args.time_stride}_tf{args.time_frac:g}")
+if args.out is None: out_dir += sparse_tag
 os.makedirs(out_dir, exist_ok=True)
 print(f"device {dev} | case {args.param} F={F} k={k} | out {out_dir}", flush=True)
 
@@ -97,6 +106,20 @@ if args.synthetic:
 else:
     xs, ys, tdat, U, V = load_grid()
 dt_data = float(tdat[1] - tdat[0])
+xs_full, ys_full = xs, ys                       # metric is always evaluated on ALL nodes
+U_full_std, V_full_std = float(U.std()), float(V.std())
+if args.sensor_spacing > 0:                     # evenly spaced sensor sub-grid of the data nodes (walls included)
+    def pick(z):
+        m = int(round((z[-1] - z[0]) / args.sensor_spacing)) + 1
+        return np.unique([int(np.argmin(np.abs(z - q))) for q in np.linspace(z[0], z[-1], m)])
+    ixs, iys = pick(xs), pick(ys)
+    xs, ys = xs[ixs], ys[iys]; U, V = U[:, ixs][:, :, iys], V[:, ixs][:, :, iys]
+kept = np.arange(0, len(tdat), args.time_stride)
+if args.time_frac < 1:
+    rs = np.random.RandomState(args.seed + 1)
+    kept = np.sort(rs.choice(kept, max(2, int(round(args.time_frac * len(kept)))), replace=False))
+print(f"observations: {len(xs)}x{len(ys)} sensors (max spacing {np.diff(xs).max():.4f}), "
+      f"{len(kept)}/{len(tdat)} snapshots (max gap {np.diff(tdat[kept]).max():.0f})", flush=True)
 Lx, Ly = xs[-1] - xs[0], ys[-1] - ys[0]
 N = args.N
 hx, hy = Lx / N, Ly / N
@@ -167,45 +190,58 @@ else:
 to_fine = lambda A: Qx @ A @ Qy.T
 to_data = lambda A: Px @ A @ Py.T
 
-def window_loss(i0):
+H_T = args.horizon_t if args.horizon_t is not None else args.horizon * dt_data
+WIN = {}   # start index -> offsets (in data intervals) of the kept snapshots scored in its window
+for a_ in kept:
+    if tdat[a_] < args.t_start: continue
+    offs = tuple(int(b_ - a_) for b_ in kept if tdat[a_] < tdat[b_] <= tdat[a_] + H_T + 1e-9 and b_ - a_ > args.burn)
+    if offs: WIN[int(a_)] = offs
+assert WIN, "no windows: increase --horizon_t"
+WIN_STARTS = np.array(sorted(WIN))
+
+def window_loss(starts):
+    """starts: array of kept start indices. Windows with the same offset pattern are rolled out together."""
     Dfx, Dfy = Du_nn(Xface_x)[..., 0], Du_nn(Xface_y)[..., 0]
     Dv = Dv_nn.value()
     Dmax = max(Dfx.max().item(), Dv.item())
     lim = 2.0 / (STAB * Dmax * (1 / hx**2 + 1 / hy**2))     # forward-Euler stability limit
     n_sub = max(1, math.ceil(dt_data / (args.cfl * lim)))
     dt = dt_data / n_sub
-    if args.start == "fine":
-        u, v = Ufine[i0], Vfine[i0]
-    else:
-        u, v = to_fine(Ud[i0]), to_fine(Vd[i0])
-    loss = 0.0
-    for j in range(1, args.horizon + 1):
-        u, v = torch.utils.checkpoint.checkpoint(rollout, u, v, Dfx, Dfy, Dv, n_sub, dt, use_reentrant=False)
-        if j <= args.burn:      # let the interpolation error of the start snapshot decay first
-            continue
-        lu = (Wnode * ((to_data(u) - Ud[i0 + j]) / sig_u).pow(2)).mean()
-        lv = (Wnode * ((to_data(v) - Vd[i0 + j]) / sig_v).pow(2)).mean()
-        loss = loss + lu + lv
-    return loss / (args.horizon - args.burn), n_sub
+    groups = {}
+    for a_ in starts: groups.setdefault(WIN[int(a_)], []).append(int(a_))
+    loss, count = 0.0, 0
+    for offs, g in groups.items():
+        i0 = torch.tensor(g, device=dev)
+        if args.start == "fine":
+            u, v = Ufine[i0], Vfine[i0]
+        else:
+            u, v = to_fine(Ud[i0]), to_fine(Vd[i0])
+        j_done = 0
+        for j in offs:
+            for _ in range(j - j_done):
+                u, v = torch.utils.checkpoint.checkpoint(rollout, u, v, Dfx, Dfy, Dv, n_sub, dt, use_reentrant=False)
+            j_done = j
+            lu = (Wnode * ((to_data(u) - Ud[i0 + j]) / sig_u).pow(2)).mean((1, 2)).sum()
+            lv = (Wnode * ((to_data(v) - Vd[i0 + j]) / sig_v).pow(2)).mean((1, 2)).sum()
+            loss = loss + lu + lv; count += len(g)
+    return loss / count, n_sub
 
 # ------------------------------------------------------------------ monitoring (true D used ONLY for reporting)
-Xm, Ym = np.meshgrid(xs, ys, indexing="ij")
+Xm, Ym = np.meshgrid(xs_full, ys_full, indexing="ij")
 Du_true = 2e-5 * (1 + np.sin(np.pi * Xm) * np.sin(np.pi * Ym))
-Xdat = grid_in(xs, ys)
+Xdat = grid_in(xs_full, ys_full)
 @torch.no_grad()
 def Du_on_data(): return Du_nn(Xdat)[..., 0].cpu().numpy()
 def L_paper(pred): return float(np.sqrt(np.mean((pred - Du_true) ** 2) / np.var(Du_true)))
 
 # ------------------------------------------------------------------ training (single stage)
-i_lo = int(np.searchsorted(tdat, args.t_start))
-i_hi = len(tdat) - 1 - args.horizon
 opt = torch.optim.Adam([{"params": Du_nn.parameters()}, {"params": Dv_nn.parameters()}], lr=args.lr)
 plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.5, patience=args.patience // 4, min_lr=args.lr / 100)
 hist = {"it": [], "loss": [], "Lpaper": [], "Dv": []}
 ema, best, since_best = None, float("inf"), 0
 t0 = time.time()
 for it in range(1, args.iters + 1):
-    starts = torch.randint(i_lo, i_hi + 1, (args.batch,))
+    starts = np.random.choice(WIN_STARTS, args.batch, replace=len(WIN_STARTS) < args.batch)
     loss, n_sub = window_loss(starts)
     opt.zero_grad(); loss.backward(); opt.step()
     lv = loss.item()
@@ -225,7 +261,10 @@ for it in range(1, args.iters + 1):
 Dp = Du_on_data(); Lp = L_paper(Dp)
 res = dict(case=args.param, F=F, k=k, N=N, horizon=args.horizon, iters_run=it, time_s=time.time() - t0,
            Du_Lpaper_pct=100 * Lp, Du_rel_L2_pct=100 * float(np.linalg.norm(Dp - Du_true) / np.linalg.norm(Du_true)),
-           Dv=Dv_nn.value().item(), Dv_rel_err_pct=100 * (Dv_nn.value().item() / 1e-5 - 1), final_loss_ema=ema)
+           Dv=Dv_nn.value().item(), Dv_rel_err_pct=100 * (Dv_nn.value().item() / 1e-5 - 1), final_loss_ema=ema,
+           sensors=f"{len(xs)}x{len(ys)}", sensor_max_spacing=float(np.diff(xs).max()), snapshots_kept=int(len(kept)),
+           max_time_gap=float(np.diff(tdat[kept]).max()), n_windows=int(len(WIN_STARTS)),
+           data_fraction_pct=100 * len(xs) * len(ys) * len(kept) / (len(xs_full) * len(ys_full) * len(tdat)))
 print(json.dumps(res, indent=2))
 json.dump(dict(result=res, args=vars(args), hist=hist), open(os.path.join(out_dir, "result.json"), "w"), indent=1)
 torch.save({"Du_nn": Du_nn.state_dict(), "Dv_nn": Dv_nn.state_dict(), "args": vars(args)}, os.path.join(out_dir, "D_model.pt"))
