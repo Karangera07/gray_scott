@@ -1,0 +1,33 @@
+device cuda | comsol case 1 F=0.037 k=0.06 | 301/301 times, 1020/10201 nodes (fixed) -> 307020 samples (10.00% of full) | 270 windows | out C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\results\sparse_comsol_p1_s0.1f_t1
+trainable parameters: field 66178, Du_net 3297, Dv 1
+warm     1 | fit 4.530e+00 | field rel-RMSE (all nodes) 1.520e+00 | 1s
+warm   500 | fit 3.310e-01 | field rel-RMSE (all nodes) 1.083e+00 | 4s
+warm  1000 | fit 1.296e-01 | field rel-RMSE (all nodes) 1.123e+00 | 6s
+warm  1500 | fit 6.437e-02 | field rel-RMSE (all nodes) 1.123e+00 | 9s
+warm  2000 | fit 3.733e-02 | field rel-RMSE (all nodes) 1.123e+00 | 12s
+warm  2500 | fit 2.649e-02 | field rel-RMSE (all nodes) 1.129e+00 | 14s
+warm  3000 | fit 2.136e-02 | field rel-RMSE (all nodes) 1.132e+00 | 17s
+it     1 | fit 2.176e-02 shoot 1.265e+00 | Du L_paper 354.27% | Dv 1.3111e-05 | field err 1.287e+00 | lr_D 3.0e-03 | 22s
+it    25 | fit 9.678e-02 shoot 6.916e-01 | Du L_paper 486.60% | Dv 1.2734e-05 | field err 1.099e+00 | lr_D 3.0e-03 | 137s
+it    50 | fit 9.938e-02 shoot 5.765e-01 | Du L_paper 488.96% | Dv 1.2264e-05 | field err 1.100e+00 | lr_D 3.0e-03 | 252s
+it    75 | fit 7.748e-02 shoot 5.974e-01 | Du L_paper 489.18% | Dv 1.1779e-05 | field err 1.096e+00 | lr_D 3.0e-03 | 363s
+it   100 | fit 1.117e-01 shoot 5.284e-01 | Du L_paper 489.27% | Dv 1.1282e-05 | field err 1.079e+00 | lr_D 3.0e-03 | 469s
+it   125 | fit 9.791e-02 shoot 5.202e-01 | Du L_paper 489.32% | Dv 1.0790e-05 | field err 1.077e+00 | lr_D 3.0e-03 | 572s
+it   150 | fit 1.128e-01 shoot 4.623e-01 | Du L_paper 489.36% | Dv 1.0296e-05 | field err 1.064e+00 | lr_D 3.0e-03 | 669s
+it   175 | fit 1.091e-01 shoot 4.704e-01 | Du L_paper 489.39% | Dv 9.8152e-06 | field err 1.059e+00 | lr_D 3.0e-03 | 763s
+it   200 | fit 1.108e-01 shoot 4.194e-01 | Du L_paper 489.41% | Dv 9.3454e-06 | field err 1.060e+00 | lr_D 3.0e-03 | 851s
+it   225 | fit 8.826e-02 shoot 4.656e-01 | Du L_paper 489.42% | Dv 8.8823e-06 | field err 1.056e+00 | lr_D 3.0e-03 | 936s
+it   250 | fit 1.068e-01 shoot 4.048e-01 | Du L_paper 489.43% | Dv 8.4210e-06 | field err 1.049e+00 | lr_D 3.0e-03 | 1017s
+it   275 | fit 1.056e-01 shoot 3.867e-01 | Du L_paper 489.44% | Dv 7.9739e-06 | field err 1.047e+00 | lr_D 3.0e-03 | 1094s
+it   300 | fit 1.109e-01 shoot 3.833e-01 | Du L_paper 489.45% | Dv 7.5649e-06 | field err 1.040e+00 | lr_D 3.0e-03 | 1167s
+it   325 | fit 1.373e-01 shoot 3.707e-01 | Du L_paper 489.46% | Dv 7.1689e-06 | field err 1.038e+00 | lr_D 3.0e-03 | 1236s
+it   350 | fit 1.134e-01 shoot 3.651e-01 | Du L_paper 489.46% | Dv 6.7722e-06 | field err 1.038e+00 | lr_D 3.0e-03 | 1302s
+it   375 | fit 1.134e-01 shoot 3.354e-01 | Du L_paper 489.47% | Dv 6.4005e-06 | field err 1.035e+00 | lr_D 3.0e-03 | 1365s
+it   400 | fit 9.601e-02 shoot 3.475e-01 | Du L_paper 489.47% | Dv 6.0302e-06 | field err 1.036e+00 | lr_D 3.0e-03 | 1424s
+it   425 | fit 1.097e-01 shoot 3.280e-01 | Du L_paper 489.48% | Dv 5.6713e-06 | field err 1.029e+00 | lr_D 3.0e-03 | 1480s
+it   450 | fit 1.014e-01 shoot 3.161e-01 | Du L_paper 489.48% | Dv 5.3346e-06 | field err 1.027e+00 | lr_D 3.0e-03 | 1532s
+it   475 | fit 1.071e-01 shoot 3.081e-01 | Du L_paper 489.48% | Dv 5.0144e-06 | field err 1.027e+00 | lr_D 3.0e-03 | 1582s
+it   500 | fit 1.087e-01 shoot 2.884e-01 | Du L_paper 489.48% | Dv 4.6993e-06 | field err 1.026e+00 | lr_D 3.0e-03 | 1629s
+it   525 | fit 1.037e-01 shoot 2.888e-01 | Du L_paper 489.48% | Dv 4.4059e-06 | field err 1.025e+00 | lr_D 3.0e-03 | 1673s
+it   550 | fit 1.106e-01 shoot 2.650e-01 | Du L_paper 489.48% | Dv 4.1088e-06 | field err 1.021e+00 | lr_D 3.0e-03 | 1715s
+it   575 | fit 1.056e-01 shoot 2.686e-01 | Du L_paper 489.48% | Dv 3.8182e-06 | field err 1.020e+00 | lr_D 3.0e-03 | 1754s

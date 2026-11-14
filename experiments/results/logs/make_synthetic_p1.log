@@ -1,0 +1,9 @@
+generating case 1 on 320^2, dt=0.0224 (447 steps per output)
+t=     0  u[0.500,1.000] v[-0.000,0.250]  0s
+t=   500  u[0.208,1.000] v[0.000,0.489]  60s
+t=  1000  u[0.230,1.000] v[0.000,0.448]  123s
+t=  1500  u[0.244,0.999] v[0.000,0.442]  187s
+t=  2000  u[0.229,0.963] v[0.000,0.455]  249s
+t=  2500  u[0.213,0.911] v[0.002,0.469]  309s
+t=  3000  u[0.216,0.892] v[0.003,0.470]  367s
+saved C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\cache\synthetic_p1.npz

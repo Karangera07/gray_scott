@@ -1,0 +1,11 @@
+{
+ "loss_line": {
+  "0.0": 3.887613173800572e-05,
+  "0.25": 3.6666348208840374e-05,
+  "0.5": 3.524770853699819e-05,
+  "0.75": 3.4616689323161996e-05,
+  "1.0": 3.4770844767653786e-05
+ },
+ "ratio_true_over_learned": 0.8944008370478238,
+ "verdict": "IDENTIFIABILITY: data barely distinguishes learned vs true D"
+}

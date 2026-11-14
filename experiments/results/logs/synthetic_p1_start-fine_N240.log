@@ -1,0 +1,7 @@
+device cuda | case 1 F=0.037 k=0.06 | out C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\results\synthetic_p1_start-fine_N240_o4
+synthetic data experiments\cache\synthetic_p1.npz (generated on 320^2, F=0.037 k=0.06)
+Traceback (most recent call last):
+  File "C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\diffsolver_inverse.py", line 115, in <module>
+    assert syn["Ufine"].shape[1] == N, f"synthetic fine fields are {syn['Ufine'].shape[1]}^2, run with --N {syn['Ufine'].shape[1]}"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: synthetic fine fields are 160^2, run with --N 160

@@ -1,0 +1,15 @@
+device cuda | comsol case 1 F=0.037 k=0.06 | 301/301 times, 204/10201 nodes (random) -> 61404 samples (2.00% of full) | 270 windows | out C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\results\sparse_comsol_p1_s0.02r_t1
+trainable parameters: field 66178, Du_net 3297, Dv 1
+warm     1 | fit 4.484e+00 | field rel-RMSE (all nodes) 1.507e+00 | 1s
+warm   500 | fit 6.788e-01 | field rel-RMSE (all nodes) 9.977e-01 | 4s
+warm  1000 | fit 3.976e-01 | field rel-RMSE (all nodes) 1.043e+00 | 6s
+warm  1500 | fit 2.315e-01 | field rel-RMSE (all nodes) 1.055e+00 | 9s
+warm  2000 | fit 1.371e-01 | field rel-RMSE (all nodes) 1.059e+00 | 12s
+warm  2500 | fit 8.655e-02 | field rel-RMSE (all nodes) 1.073e+00 | 14s
+warm  3000 | fit 6.323e-02 | field rel-RMSE (all nodes) 1.087e+00 | 17s
+it     1 | fit 6.371e-02 shoot 7.536e-01 | Du L_paper 330.69% | Dv 1.3111e-05 | field err 1.239e+00 | lr_D 3.0e-03 | 22s
+it    25 | fit 1.673e-01 shoot 6.737e-01 | Du L_paper 152.83% | Dv 1.2874e-05 | field err 1.054e+00 | lr_D 3.0e-03 | 144s
+it    50 | fit 1.211e-01 shoot 5.916e-01 | Du L_paper  95.71% | Dv 1.2431e-05 | field err 1.079e+00 | lr_D 3.0e-03 | 390s
+it    75 | fit 1.286e-01 shoot 5.520e-01 | Du L_paper  65.89% | Dv 1.1958e-05 | field err 1.073e+00 | lr_D 3.0e-03 | 648s
+it   100 | fit 1.254e-01 shoot 5.572e-01 | Du L_paper  98.79% | Dv 1.1536e-05 | field err 1.069e+00 | lr_D 3.0e-03 | 975s
+it   125 | fit 1.311e-01 shoot 5.254e-01 | Du L_paper 118.30% | Dv 1.1173e-05 | field err 1.064e+00 | lr_D 3.0e-03 | 1372s
