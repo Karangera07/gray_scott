@@ -45,9 +45,10 @@ ap.add_argument("--iters", type=int, default=3000, help="max joint iterations")
 ap.add_argument("--lr_D", type=float, default=3e-3)
 ap.add_argument("--lr_field", type=float, default=1e-3)
 ap.add_argument("--w_shoot", type=float, default=1.0)
+ap.add_argument("--w_cons", type=float, default=1.0, help="solver-vs-field consistency on the full grid")
 ap.add_argument("--patience", type=int, default=400)
 ap.add_argument("--n_fourier", type=int, default=128)
-ap.add_argument("--sig_xy", type=float, default=8.0, help="Fourier std in space (cycles per unit)")
+ap.add_argument("--sig_xy", type=float, default=4.0, help="Fourier std in space (cycles per unit)")
 ap.add_argument("--sig_t", type=float, default=3.0, help="Fourier std in normalized time")
 ap.add_argument("--width", type=int, default=128)
 ap.add_argument("--D_scale", type=float, default=1e-5)
@@ -159,6 +160,10 @@ def shoot_loss():
         idx = OBS_IDX[b]
         pu, pv = (Px @ u[0] @ Py.T).reshape(-1)[idx], (Px @ v[0] @ Py.T).reshape(-1)[idx]
         tot = tot + ((pu - Ud[b, idx]) / sig_u).pow(2).mean() + ((pv - Vd[b, idx]) / sig_v).pow(2).mean()
+        if args.w_cons > 0:   # between sensors: solver(field(t_a)) must agree with field(t_b) on the whole grid
+            u1, v1 = field(Xc, Yc, torch.full_like(Xc, float(tdat[b])))
+            cons = ((u[0] - u1) / sig_u).pow(2).mean() + ((v[0] - v1) / sig_v).pow(2).mean()
+            tot = tot + args.w_cons * cons
     return tot / args.batch
 
 # ------------------------------------------------------------------ monitoring (truth used ONLY for reporting)
