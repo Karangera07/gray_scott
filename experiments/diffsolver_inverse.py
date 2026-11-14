@@ -23,6 +23,10 @@ import argparse, json, math, os, time
 import numpy as np
 import torch
 import torch.nn as nn
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from gs_solver import spline_matrix, divflux2 as _df2, divflux4 as _df4, STAB as _STAB
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +52,9 @@ ap.add_argument("--D_scale", type=float, default=1e-5)
 ap.add_argument("--cfl", type=float, default=0.8, help="fraction of explicit stability limit")
 ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
+ap.add_argument("--synthetic", type=str, default=None, help="npz from make_synthetic.py instead of COMSOL data")
+ap.add_argument("--start", type=str, default="data", choices=["data", "fine"],
+                help="window start state: spline of the data nodes, or exact fine field (synthetic only)")
 ap.add_argument("--cache", type=str, default=None, help="npz cache dir (default experiments/cache)")
 ap.add_argument("--out", type=str, default=None)
 ap.add_argument("--tag", type=str, default="")
@@ -58,7 +65,7 @@ dev = torch.device(args.device)
 F, k = FK.get(args.param, (None, None))
 F = args.F if args.F is not None else F
 k = args.k if args.k is not None else k
-out_dir = args.out or os.path.join(HERE, "results", f"diffsolver_p{args.param}_N{args.N}_H{args.horizon}_o{args.order}_{args.weight}{args.tag}")
+out_dir = args.out or os.path.join(HERE, "results", (f"synthetic_p{args.param}_start-{args.start}_N{args.N}_o{args.order}{args.tag}" if args.synthetic else f"diffsolver_p{args.param}_N{args.N}_H{args.horizon}_o{args.order}_{args.weight}{args.tag}"))
 os.makedirs(out_dir, exist_ok=True)
 print(f"device {dev} | case {args.param} F={F} k={k} | out {out_dir}", flush=True)
 
@@ -82,7 +89,13 @@ def load_grid():
     np.savez(cpath, xs=xs, ys=ys, t=t, U=U, V=V)
     return xs, ys, t, U, V
 
-xs, ys, tdat, U, V = load_grid()
+if args.synthetic:
+    syn = np.load(args.synthetic)
+    xs, ys, tdat, U, V = syn["xs"], syn["ys"], syn["t"], syn["U"], syn["V"]
+    F, k = float(syn["F"]), float(syn["k"])
+    print(f"synthetic data {args.synthetic} (generated on {int(syn['Ngen'])}^2, F={F} k={k})", flush=True)
+else:
+    xs, ys, tdat, U, V = load_grid()
 dt_data = float(tdat[1] - tdat[0])
 Lx, Ly = xs[-1] - xs[0], ys[-1] - ys[0]
 N = args.N
@@ -91,29 +104,16 @@ xc = xs[0] + (np.arange(N) + 0.5) * hx
 yc = ys[0] + (np.arange(N) + 0.5) * hy
 
 # linear (cubic-spline) interpolation operators: data grid <-> solver cell centres
-def spline_matrix(src, dst):
-    """Matrix S with S @ f(src) = clamped cubic spline (f'=0 at both ends, i.e. no-flux walls)
-    evaluated at dst. Pure numpy (scipy is not available in the GPU env)."""
-    n, h = len(src), np.diff(src)
-    A = np.zeros((n, n)); B = np.zeros((n, n))         # A @ M = B @ y, M = second derivatives
-    A[0, 0], A[0, 1] = h[0] / 3, h[0] / 6; B[0, 0], B[0, 1] = -1 / h[0], 1 / h[0]
-    A[-1, -1], A[-1, -2] = h[-1] / 3, h[-1] / 6; B[-1, -1], B[-1, -2] = -1 / h[-1], 1 / h[-1]
-    for i in range(1, n - 1):
-        A[i, i - 1], A[i, i], A[i, i + 1] = h[i - 1] / 6, (h[i - 1] + h[i]) / 3, h[i] / 6
-        B[i, i - 1], B[i, i], B[i, i + 1] = 1 / h[i - 1], -1 / h[i - 1] - 1 / h[i], 1 / h[i]
-    Mop = np.linalg.solve(A, B)                          # y -> M
-    j = np.clip(np.searchsorted(src, dst) - 1, 0, n - 2)
-    hj = h[j]; a = (src[j + 1] - dst) / hj; b = 1 - a
-    S = np.zeros((len(dst), n)); r = np.arange(len(dst))
-    S[r, j] += a; S[r, j + 1] += b
-    S += ((a**3 - a) * hj**2 / 6)[:, None] * Mop[j] + ((b**3 - b) * hj**2 / 6)[:, None] * Mop[j + 1]
-    return S                                             # (len(dst), len(src))
 Qx, Qy = spline_matrix(xs, xc), spline_matrix(ys, yc)                # data -> fine
 Px, Py = spline_matrix(xc, xs), spline_matrix(yc, ys)                # fine -> data
 T32 = lambda a: torch.tensor(a, dtype=torch.float32, device=dev)
 Qx, Qy, Px, Py = map(T32, (Qx, Qy, Px, Py))
 Ud, Vd = T32(U), T32(V)
 sig_u, sig_v = float(U.std()), float(V.std())
+if args.start == "fine":
+    assert args.synthetic, "--start fine needs --synthetic"
+    assert syn["Ufine"].shape[1] == N, f"synthetic fine fields are {syn['Ufine'].shape[1]}^2, run with --N {syn['Ufine'].shape[1]}"
+    Ufine, Vfine = T32(syn["Ufine"]), T32(syn["Vfine"])
 
 # ------------------------------------------------------------------ unknowns
 D_SCALE = args.D_scale
@@ -146,36 +146,8 @@ else:   # 4th order: all faces m*h, m=0..N (walls included)
     Xface_y = grid_in(xc, ys[0] + np.arange(0, N + 1) * hy)   # (N, N+1)
 
 # ------------------------------------------------------------------ solver
-def divflux2(u, Dfx, Dfy):
-    """2nd-order finite-volume div(D grad u), zero-flux walls. u: (B,N,N)."""
-    fx = Dfx * (u[:, 1:] - u[:, :-1]) / hx
-    fy = Dfy * (u[:, :, 1:] - u[:, :, :-1]) / hy
-    zx = torch.zeros_like(u[:, :1]); zy = torch.zeros_like(u[:, :, :1])
-    return (torch.cat([fx, zx], 1) - torch.cat([zx, fx], 1)) / hx + \
-           (torch.cat([fy, zy], 2) - torch.cat([zy, fy], 2)) / hy
-
-def _div4_1d(u, D, h):
-    """d/dx (D du/dx) along dim 1, 4th order. u: (B,N,M) cell centres; D: faces 0..N, shape (N+1,M)
-    or scalar. Interior face gradients (1,-27,27,-1)/24h; first faces off each wall one-sided
-    (-23,21,3,-1)/24h; wall flux = 0 (no-flux); one ghost flux beyond each wall from the cubic
-    extrapolation f_-1 = -6 f_1 + 4 f_2 - f_3 (uses f_0 = 0); then the same 4-point stencil on fluxes."""
-    gi = (u[:, :-3] - 27 * u[:, 1:-2] + 27 * u[:, 2:-1] - u[:, 3:]) / (24 * h)            # faces 2..N-2
-    g1 = (-23 * u[:, 0:1] + 21 * u[:, 1:2] + 3 * u[:, 2:3] - u[:, 3:4]) / (24 * h)        # face 1
-    gN = (23 * u[:, -1:] - 21 * u[:, -2:-1] - 3 * u[:, -3:-2] + u[:, -4:-3]) / (24 * h)   # face N-1
-    z = torch.zeros_like(g1)
-    f = D * torch.cat([z, g1, gi, gN, z], 1)                                              # faces 0..N
-    fm = -6 * f[:, 1:2] + 4 * f[:, 2:3] - f[:, 3:4]
-    fp = -6 * f[:, -2:-1] + 4 * f[:, -3:-2] - f[:, -4:-3]
-    f = torch.cat([fm, f, fp], 1)                                                         # faces -1..N+1
-    return (f[:, :-3] - 27 * f[:, 1:-2] + 27 * f[:, 2:-1] - f[:, 3:]) / (24 * h)
-
-def divflux4(u, Dfx, Dfy):
-    """4th-order conservative FD div(D grad u) with zero-flux walls. u: (B,N,N)."""
-    Dy = Dfy.T if torch.is_tensor(Dfy) else Dfy
-    return _div4_1d(u, Dfx, hx) + _div4_1d(u.transpose(1, 2), Dy, hy).transpose(1, 2)
-
-divflux = divflux2 if args.order == 2 else divflux4
-STAB = 4.0 if args.order == 2 else 49.0 / 9.0     # max eigenvalue of -d2/dx2 stencil, times h^2
+divflux = (lambda u, a, b: _df2(u, a, b, hx, hy)) if args.order == 2 else (lambda u, a, b: _df4(u, a, b, hx, hy))
+STAB = _STAB[args.order]
 
 def rollout(u, v, Dfx, Dfy, Dv, n_sub, dt):
     for _ in range(n_sub):
@@ -201,7 +173,10 @@ def window_loss(i0):
     lim = 2.0 / (STAB * Dmax * (1 / hx**2 + 1 / hy**2))     # forward-Euler stability limit
     n_sub = max(1, math.ceil(dt_data / (args.cfl * lim)))
     dt = dt_data / n_sub
-    u, v = to_fine(Ud[i0]), to_fine(Vd[i0])
+    if args.start == "fine":
+        u, v = Ufine[i0], Vfine[i0]
+    else:
+        u, v = to_fine(Ud[i0]), to_fine(Vd[i0])
     loss = 0.0
     for j in range(1, args.horizon + 1):
         u, v = torch.utils.checkpoint.checkpoint(rollout, u, v, Dfx, Dfy, Dv, n_sub, dt, use_reentrant=False)
