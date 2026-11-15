@@ -1,0 +1,113 @@
+device cuda | case 1 F=0.037 k=0.06 | out C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\results\diffsolver_p1_N192_H2_o2_uniform_Ht30b2_sp0.04_ts1_tf1
+observations: 26x26 sensors (max spacing 0.0505), 301/301 snapshots (max gap 10)
+it     1 | loss 5.907e-01 ema 5.907e-01 | Du L_paper 365.39% | Dv 1.3111e-05 | lr 3.0e-03 | substeps 25 | 1s
+it    25 | loss 8.156e-02 ema 4.390e-01 | Du L_paper 296.82% | Dv 1.2666e-05 | lr 3.0e-03 | substeps 72 | 32s
+it    50 | loss 4.680e-02 ema 2.858e-01 | Du L_paper 166.31% | Dv 1.2545e-05 | lr 3.0e-03 | substeps 58 | 77s
+it    75 | loss 4.766e-02 ema 1.909e-01 | Du L_paper 183.15% | Dv 1.2327e-05 | lr 3.0e-03 | substeps 60 | 120s
+it   100 | loss 4.922e-02 ema 1.335e-01 | Du L_paper 173.75% | Dv 1.2112e-05 | lr 3.0e-03 | substeps 59 | 162s
+it   125 | loss 4.490e-02 ema 9.750e-02 | Du L_paper 170.34% | Dv 1.1893e-05 | lr 3.0e-03 | substeps 59 | 204s
+it   150 | loss 4.137e-02 ema 7.522e-02 | Du L_paper 159.06% | Dv 1.1686e-05 | lr 3.0e-03 | substeps 59 | 246s
+it   175 | loss 3.243e-02 ema 6.061e-02 | Du L_paper 149.12% | Dv 1.1485e-05 | lr 3.0e-03 | substeps 60 | 288s
+it   200 | loss 3.673e-02 ema 5.133e-02 | Du L_paper 136.35% | Dv 1.1293e-05 | lr 3.0e-03 | substeps 60 | 331s
+it   225 | loss 3.419e-02 ema 4.452e-02 | Du L_paper 120.94% | Dv 1.1103e-05 | lr 3.0e-03 | substeps 60 | 373s
+it   250 | loss 2.527e-02 ema 3.860e-02 | Du L_paper 119.45% | Dv 1.0926e-05 | lr 3.0e-03 | substeps 63 | 417s
+it   275 | loss 2.229e-02 ema 3.365e-02 | Du L_paper  82.40% | Dv 1.0782e-05 | lr 3.0e-03 | substeps 63 | 462s
+it   300 | loss 1.478e-02 ema 2.654e-02 | Du L_paper  26.12% | Dv 1.0611e-05 | lr 3.0e-03 | substeps 74 | 511s
+it   325 | loss 1.478e-02 ema 2.049e-02 | Du L_paper  30.15% | Dv 1.0490e-05 | lr 3.0e-03 | substeps 78 | 566s
+it   350 | loss 1.069e-02 ema 1.650e-02 | Du L_paper  18.15% | Dv 1.0400e-05 | lr 3.0e-03 | substeps 76 | 620s
+it   375 | loss 1.135e-02 ema 1.420e-02 | Du L_paper  12.78% | Dv 1.0319e-05 | lr 3.0e-03 | substeps 76 | 674s
+it   400 | loss 8.745e-03 ema 1.268e-02 | Du L_paper  11.93% | Dv 1.0253e-05 | lr 3.0e-03 | substeps 75 | 728s
+it   425 | loss 9.200e-03 ema 1.144e-02 | Du L_paper  16.39% | Dv 1.0190e-05 | lr 3.0e-03 | substeps 75 | 781s
+it   450 | loss 9.693e-03 ema 1.124e-02 | Du L_paper  17.18% | Dv 1.0138e-05 | lr 3.0e-03 | substeps 75 | 834s
+it   475 | loss 1.220e-02 ema 1.069e-02 | Du L_paper  13.51% | Dv 1.0097e-05 | lr 3.0e-03 | substeps 74 | 887s
+it   500 | loss 9.344e-03 ema 1.018e-02 | Du L_paper  11.21% | Dv 1.0057e-05 | lr 3.0e-03 | substeps 74 | 940s
+it   525 | loss 9.231e-03 ema 1.008e-02 | Du L_paper  11.47% | Dv 1.0028e-05 | lr 3.0e-03 | substeps 74 | 992s
+it   550 | loss 1.106e-02 ema 9.950e-03 | Du L_paper  10.83% | Dv 1.0006e-05 | lr 3.0e-03 | substeps 74 | 1045s
+it   575 | loss 1.136e-02 ema 1.007e-02 | Du L_paper  11.79% | Dv 9.9941e-06 | lr 3.0e-03 | substeps 74 | 1097s
+it   600 | loss 9.530e-03 ema 9.854e-03 | Du L_paper  12.23% | Dv 9.9800e-06 | lr 3.0e-03 | substeps 74 | 1149s
+it   625 | loss 1.286e-02 ema 1.005e-02 | Du L_paper  11.16% | Dv 9.9765e-06 | lr 3.0e-03 | substeps 74 | 1202s
+it   650 | loss 1.037e-02 ema 9.873e-03 | Du L_paper  10.73% | Dv 9.9630e-06 | lr 3.0e-03 | substeps 74 | 1254s
+it   675 | loss 8.288e-03 ema 9.831e-03 | Du L_paper  10.26% | Dv 9.9583e-06 | lr 3.0e-03 | substeps 74 | 1307s
+it   700 | loss 8.433e-03 ema 9.952e-03 | Du L_paper  11.32% | Dv 9.9619e-06 | lr 3.0e-03 | substeps 74 | 1359s
+it   725 | loss 9.457e-03 ema 9.695e-03 | Du L_paper  10.93% | Dv 9.9526e-06 | lr 3.0e-03 | substeps 74 | 1412s
+it   750 | loss 1.002e-02 ema 9.716e-03 | Du L_paper  12.81% | Dv 9.9411e-06 | lr 3.0e-03 | substeps 74 | 1464s
+it   775 | loss 1.341e-02 ema 9.962e-03 | Du L_paper  11.45% | Dv 9.9360e-06 | lr 3.0e-03 | substeps 74 | 1517s
+it   800 | loss 7.674e-03 ema 1.014e-02 | Du L_paper  10.19% | Dv 9.9395e-06 | lr 3.0e-03 | substeps 74 | 1570s
+it   825 | loss 9.698e-03 ema 1.007e-02 | Du L_paper  12.59% | Dv 9.9476e-06 | lr 3.0e-03 | substeps 73 | 1622s
+it   850 | loss 9.286e-03 ema 9.984e-03 | Du L_paper  14.69% | Dv 9.9509e-06 | lr 1.5e-03 | substeps 73 | 1675s
+it   875 | loss 1.015e-02 ema 1.003e-02 | Du L_paper  13.58% | Dv 9.9541e-06 | lr 1.5e-03 | substeps 74 | 1727s
+it   900 | loss 9.622e-03 ema 9.987e-03 | Du L_paper   9.96% | Dv 9.9532e-06 | lr 1.5e-03 | substeps 74 | 1780s
+it   925 | loss 9.567e-03 ema 1.053e-02 | Du L_paper  13.63% | Dv 9.9574e-06 | lr 1.5e-03 | substeps 74 | 1832s
+it   950 | loss 9.397e-03 ema 1.039e-02 | Du L_paper   9.91% | Dv 9.9544e-06 | lr 7.5e-04 | substeps 74 | 1885s
+it   975 | loss 8.710e-03 ema 1.003e-02 | Du L_paper  10.41% | Dv 9.9558e-06 | lr 7.5e-04 | substeps 74 | 1937s
+it  1000 | loss 1.155e-02 ema 1.004e-02 | Du L_paper  10.76% | Dv 9.9534e-06 | lr 7.5e-04 | substeps 74 | 1990s
+it  1025 | loss 8.021e-03 ema 9.758e-03 | Du L_paper  10.66% | Dv 9.9486e-06 | lr 7.5e-04 | substeps 74 | 2042s
+it  1050 | loss 8.384e-03 ema 9.900e-03 | Du L_paper  11.20% | Dv 9.9515e-06 | lr 3.8e-04 | substeps 74 | 2099s
+it  1075 | loss 9.311e-03 ema 1.006e-02 | Du L_paper  10.35% | Dv 9.9514e-06 | lr 3.8e-04 | substeps 74 | 2151s
+it  1100 | loss 1.323e-02 ema 9.992e-03 | Du L_paper  10.30% | Dv 9.9513e-06 | lr 3.8e-04 | substeps 74 | 2204s
+it  1125 | loss 1.013e-02 ema 9.755e-03 | Du L_paper  10.48% | Dv 9.9509e-06 | lr 3.8e-04 | substeps 74 | 2257s
+it  1150 | loss 9.458e-03 ema 9.986e-03 | Du L_paper  10.72% | Dv 9.9504e-06 | lr 1.9e-04 | substeps 74 | 2310s
+it  1175 | loss 9.285e-03 ema 9.997e-03 | Du L_paper  10.69% | Dv 9.9503e-06 | lr 1.9e-04 | substeps 74 | 2364s
+it  1200 | loss 1.054e-02 ema 9.782e-03 | Du L_paper  10.58% | Dv 9.9498e-06 | lr 1.9e-04 | substeps 74 | 2470s
+it  1225 | loss 1.089e-02 ema 9.873e-03 | Du L_paper  10.30% | Dv 9.9498e-06 | lr 1.9e-04 | substeps 74 | 2572s
+it  1250 | loss 1.103e-02 ema 1.007e-02 | Du L_paper  10.24% | Dv 9.9497e-06 | lr 9.4e-05 | substeps 74 | 2625s
+it  1275 | loss 1.328e-02 ema 1.010e-02 | Du L_paper  10.25% | Dv 9.9498e-06 | lr 9.4e-05 | substeps 74 | 2678s
+it  1300 | loss 8.494e-03 ema 9.921e-03 | Du L_paper  10.46% | Dv 9.9500e-06 | lr 9.4e-05 | substeps 74 | 2730s
+it  1325 | loss 1.157e-02 ema 9.674e-03 | Du L_paper  10.98% | Dv 9.9496e-06 | lr 9.4e-05 | substeps 74 | 2783s
+it  1350 | loss 1.131e-02 ema 9.861e-03 | Du L_paper  10.78% | Dv 9.9490e-06 | lr 9.4e-05 | substeps 74 | 2836s
+it  1375 | loss 1.988e-02 ema 9.976e-03 | Du L_paper  10.17% | Dv 9.9486e-06 | lr 9.4e-05 | substeps 74 | 2888s
+it  1400 | loss 9.422e-03 ema 1.007e-02 | Du L_paper  11.49% | Dv 9.9490e-06 | lr 9.4e-05 | substeps 74 | 2942s
+it  1425 | loss 7.091e-03 ema 9.778e-03 | Du L_paper  10.29% | Dv 9.9487e-06 | lr 4.7e-05 | substeps 74 | 2995s
+it  1450 | loss 1.203e-02 ema 9.746e-03 | Du L_paper  10.73% | Dv 9.9487e-06 | lr 4.7e-05 | substeps 74 | 3048s
+it  1475 | loss 9.653e-03 ema 9.782e-03 | Du L_paper  10.15% | Dv 9.9485e-06 | lr 4.7e-05 | substeps 74 | 3101s
+it  1500 | loss 9.933e-03 ema 9.851e-03 | Du L_paper  10.26% | Dv 9.9488e-06 | lr 4.7e-05 | substeps 74 | 3154s
+it  1525 | loss 5.925e-03 ema 9.778e-03 | Du L_paper  10.28% | Dv 9.9490e-06 | lr 4.7e-05 | substeps 74 | 3207s
+it  1550 | loss 1.533e-02 ema 9.766e-03 | Du L_paper  10.70% | Dv 9.9490e-06 | lr 4.7e-05 | substeps 74 | 3260s
+it  1575 | loss 1.039e-02 ema 9.902e-03 | Du L_paper  10.33% | Dv 9.9485e-06 | lr 4.7e-05 | substeps 74 | 3313s
+it  1600 | loss 8.181e-03 ema 9.719e-03 | Du L_paper  10.55% | Dv 9.9484e-06 | lr 4.7e-05 | substeps 74 | 3366s
+it  1625 | loss 1.055e-02 ema 9.894e-03 | Du L_paper  10.28% | Dv 9.9486e-06 | lr 4.7e-05 | substeps 74 | 3419s
+it  1650 | loss 1.083e-02 ema 1.007e-02 | Du L_paper  10.38% | Dv 9.9485e-06 | lr 3.0e-05 | substeps 74 | 3472s
+it  1675 | loss 1.221e-02 ema 9.978e-03 | Du L_paper  10.68% | Dv 9.9486e-06 | lr 3.0e-05 | substeps 74 | 3524s
+it  1700 | loss 7.194e-03 ema 1.010e-02 | Du L_paper  10.36% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 3577s
+it  1725 | loss 1.010e-02 ema 1.010e-02 | Du L_paper  10.41% | Dv 9.9484e-06 | lr 3.0e-05 | substeps 74 | 3629s
+it  1750 | loss 7.823e-03 ema 1.001e-02 | Du L_paper  10.74% | Dv 9.9485e-06 | lr 3.0e-05 | substeps 74 | 3682s
+it  1775 | loss 9.043e-03 ema 9.818e-03 | Du L_paper  10.84% | Dv 9.9485e-06 | lr 3.0e-05 | substeps 74 | 3735s
+it  1800 | loss 1.101e-02 ema 9.860e-03 | Du L_paper  10.50% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 3788s
+it  1825 | loss 7.966e-03 ema 9.513e-03 | Du L_paper  10.75% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 3841s
+it  1850 | loss 7.970e-03 ema 9.771e-03 | Du L_paper  10.33% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 3894s
+it  1875 | loss 8.586e-03 ema 9.998e-03 | Du L_paper  10.44% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 3947s
+it  1900 | loss 7.888e-03 ema 9.810e-03 | Du L_paper  10.50% | Dv 9.9482e-06 | lr 3.0e-05 | substeps 74 | 3999s
+it  1925 | loss 1.093e-02 ema 9.912e-03 | Du L_paper  10.18% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 4052s
+it  1950 | loss 7.893e-03 ema 9.991e-03 | Du L_paper  10.20% | Dv 9.9485e-06 | lr 3.0e-05 | substeps 74 | 4104s
+it  1975 | loss 1.406e-02 ema 1.043e-02 | Du L_paper  10.04% | Dv 9.9485e-06 | lr 3.0e-05 | substeps 74 | 4157s
+it  2000 | loss 1.267e-02 ema 1.022e-02 | Du L_paper  10.15% | Dv 9.9486e-06 | lr 3.0e-05 | substeps 74 | 4209s
+it  2025 | loss 1.169e-02 ema 1.020e-02 | Du L_paper  10.44% | Dv 9.9487e-06 | lr 3.0e-05 | substeps 74 | 4262s
+it  2050 | loss 1.037e-02 ema 1.013e-02 | Du L_paper  10.13% | Dv 9.9486e-06 | lr 3.0e-05 | substeps 74 | 4314s
+it  2075 | loss 1.165e-02 ema 1.028e-02 | Du L_paper  10.29% | Dv 9.9486e-06 | lr 3.0e-05 | substeps 74 | 4367s
+it  2100 | loss 8.577e-03 ema 1.041e-02 | Du L_paper  10.20% | Dv 9.9488e-06 | lr 3.0e-05 | substeps 74 | 4420s
+it  2125 | loss 8.992e-03 ema 1.026e-02 | Du L_paper  10.12% | Dv 9.9489e-06 | lr 3.0e-05 | substeps 74 | 4472s
+it  2150 | loss 9.303e-03 ema 9.969e-03 | Du L_paper  10.32% | Dv 9.9490e-06 | lr 3.0e-05 | substeps 74 | 4525s
+it  2175 | loss 8.544e-03 ema 9.852e-03 | Du L_paper  10.01% | Dv 9.9488e-06 | lr 3.0e-05 | substeps 74 | 4577s
+it  2200 | loss 9.836e-03 ema 9.735e-03 | Du L_paper  10.62% | Dv 9.9487e-06 | lr 3.0e-05 | substeps 74 | 4630s
+it  2225 | loss 1.110e-02 ema 9.756e-03 | Du L_paper  10.34% | Dv 9.9483e-06 | lr 3.0e-05 | substeps 74 | 4682s
+converged (loss plateau) at it 2233
+{
+  "case": 1,
+  "F": 0.037,
+  "k": 0.06,
+  "N": 192,
+  "horizon": 2,
+  "iters_run": 2233,
+  "time_s": 4698.8144788742065,
+  "Du_Lpaper_pct": 10.291754453056996,
+  "Du_rel_L2_pct": 2.102274138949265,
+  "Dv": 9.948226761480328e-06,
+  "Dv_rel_err_pct": -0.5177323851967341,
+  "final_loss_ema": 0.009583667766766953,
+  "sensors": "26x26",
+  "sensor_max_spacing": 0.050538033395000015,
+  "snapshots_kept": 301,
+  "max_time_gap": 10.0,
+  "n_windows": 268,
+  "data_fraction_pct": 6.626801293990785
+}
