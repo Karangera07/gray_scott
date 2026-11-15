@@ -1,0 +1,24 @@
+device cuda | case 1 F=0.037 k=0.06 | out C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\results\diffsolver_p1_N192_H2_o2_uniform_sp0_ts1_tf0.3
+observations: 101x101 sensors (max spacing 0.0182), 90/301 snapshots (max gap 160)
+it     1 | loss 1.088e+00 ema 1.088e+00 | Du L_paper 365.36% | Dv 1.3111e-05 | lr 3.0e-03 | substeps 25 | 8s
+it    25 | loss 8.172e-02 ema 7.975e-01 | Du L_paper 250.39% | Dv 1.2685e-05 | lr 3.0e-03 | substeps 68 | 625s
+it    50 | loss 3.808e-02 ema 5.031e-01 | Du L_paper 113.89% | Dv 1.2626e-05 | lr 3.0e-03 | substeps 51 | 1431s
+it    75 | loss 3.757e-02 ema 3.205e-01 | Du L_paper 128.65% | Dv 1.2454e-05 | lr 3.0e-03 | substeps 54 | 2176s
+it   100 | loss 2.756e-02 ema 2.094e-01 | Du L_paper 128.65% | Dv 1.2278e-05 | lr 3.0e-03 | substeps 54 | 2869s
+it   125 | loss 3.990e-02 ema 1.408e-01 | Du L_paper 123.24% | Dv 1.2107e-05 | lr 3.0e-03 | substeps 53 | 3556s
+it   150 | loss 2.751e-02 ema 9.878e-02 | Du L_paper 119.68% | Dv 1.1926e-05 | lr 3.0e-03 | substeps 53 | 4107s
+it   175 | loss 2.989e-02 ema 7.363e-02 | Du L_paper 111.64% | Dv 1.1745e-05 | lr 3.0e-03 | substeps 53 | 4556s
+it   200 | loss 3.360e-02 ema 5.678e-02 | Du L_paper 105.01% | Dv 1.1566e-05 | lr 3.0e-03 | substeps 54 | 4930s
+it   225 | loss 2.819e-02 ema 4.493e-02 | Du L_paper  98.79% | Dv 1.1385e-05 | lr 3.0e-03 | substeps 54 | 5226s
+it   250 | loss 2.331e-02 ema 3.676e-02 | Du L_paper  89.29% | Dv 1.1211e-05 | lr 3.0e-03 | substeps 56 | 5534s
+it   275 | loss 1.172e-02 ema 2.878e-02 | Du L_paper  64.94% | Dv 1.1036e-05 | lr 3.0e-03 | substeps 61 | 5836s
+it   300 | loss 4.690e-03 ema 2.010e-02 | Du L_paper  39.56% | Dv 1.0882e-05 | lr 3.0e-03 | substeps 67 | 6191s
+it   325 | loss 1.906e-03 ema 1.317e-02 | Du L_paper  25.79% | Dv 1.0749e-05 | lr 3.0e-03 | substeps 72 | 6587s
+it   350 | loss 9.428e-04 ema 8.400e-03 | Du L_paper  24.73% | Dv 1.0643e-05 | lr 3.0e-03 | substeps 74 | 6965s
+it   375 | loss 8.615e-04 ema 5.377e-03 | Du L_paper  20.05% | Dv 1.0556e-05 | lr 3.0e-03 | substeps 75 | 7300s
+it   400 | loss 4.637e-04 ema 3.473e-03 | Du L_paper  19.05% | Dv 1.0484e-05 | lr 3.0e-03 | substeps 75 | 7641s
+it   425 | loss 3.885e-04 ema 2.269e-03 | Du L_paper  16.21% | Dv 1.0422e-05 | lr 3.0e-03 | substeps 74 | 7958s
+it   450 | loss 2.715e-04 ema 1.506e-03 | Du L_paper  15.66% | Dv 1.0368e-05 | lr 3.0e-03 | substeps 74 | 8254s
+it   475 | loss 3.010e-04 ema 1.026e-03 | Du L_paper  13.35% | Dv 1.0319e-05 | lr 3.0e-03 | substeps 74 | 8488s
+it   500 | loss 2.203e-04 ema 7.120e-04 | Du L_paper  12.19% | Dv 1.0276e-05 | lr 3.0e-03 | substeps 74 | 8689s
+it   525 | loss 2.175e-04 ema 5.081e-04 | Du L_paper  10.19% | Dv 1.0240e-05 | lr 3.0e-03 | substeps 73 | 8867s
