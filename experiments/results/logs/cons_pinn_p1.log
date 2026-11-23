@@ -1,0 +1,201 @@
+device cuda | case 1 F=0.037 k=0.06 | out C:\Users\GPU2\gray_scott_projects\gray_scott\experiments\results\cons_pinn_p1
+data C:\Users\GPU2\gray_scott_projects\gray_scott\data\param1\D1\data_1.txt (10201, 604)
+pretrain u epoch 25/500 | MSE 3.834e-03 (var 6.73e-02) | 10s
+pretrain u epoch 50/500 | MSE 1.070e-03 (var 6.73e-02) | 20s
+pretrain u epoch 75/500 | MSE 3.111e-04 (var 6.73e-02) | 29s
+pretrain u epoch 100/500 | MSE 1.909e-04 (var 6.73e-02) | 38s
+pretrain u epoch 125/500 | MSE 1.204e-04 (var 6.73e-02) | 47s
+pretrain u epoch 150/500 | MSE 1.153e-04 (var 6.73e-02) | 56s
+pretrain u epoch 175/500 | MSE 7.726e-05 (var 6.73e-02) | 64s
+pretrain u epoch 200/500 | MSE 6.557e-05 (var 6.73e-02) | 73s
+pretrain u epoch 225/500 | MSE 4.619e-05 (var 6.73e-02) | 82s
+pretrain u epoch 250/500 | MSE 3.778e-05 (var 6.73e-02) | 91s
+pretrain u epoch 275/500 | MSE 3.404e-05 (var 6.73e-02) | 99s
+pretrain u epoch 300/500 | MSE 2.411e-05 (var 6.73e-02) | 108s
+pretrain u epoch 325/500 | MSE 2.103e-05 (var 6.73e-02) | 116s
+pretrain u epoch 350/500 | MSE 1.770e-05 (var 6.73e-02) | 125s
+pretrain u epoch 375/500 | MSE 1.498e-05 (var 6.73e-02) | 134s
+pretrain u epoch 400/500 | MSE 1.298e-05 (var 6.73e-02) | 143s
+pretrain u epoch 425/500 | MSE 1.170e-05 (var 6.73e-02) | 152s
+pretrain u epoch 450/500 | MSE 1.094e-05 (var 6.73e-02) | 160s
+pretrain u epoch 475/500 | MSE 1.048e-05 (var 6.73e-02) | 169s
+pretrain u epoch 500/500 | MSE 1.030e-05 (var 6.73e-02) | 178s
+pretrain v epoch 25/500 | MSE 3.004e-03 (var 1.64e-02) | 186s
+pretrain v epoch 50/500 | MSE 5.322e-04 (var 1.64e-02) | 195s
+pretrain v epoch 75/500 | MSE 2.858e-04 (var 1.64e-02) | 203s
+pretrain v epoch 100/500 | MSE 2.031e-04 (var 1.64e-02) | 212s
+pretrain v epoch 125/500 | MSE 1.337e-04 (var 1.64e-02) | 221s
+pretrain v epoch 150/500 | MSE 1.095e-04 (var 1.64e-02) | 229s
+pretrain v epoch 175/500 | MSE 7.671e-05 (var 1.64e-02) | 238s
+pretrain v epoch 200/500 | MSE 5.107e-05 (var 1.64e-02) | 246s
+pretrain v epoch 225/500 | MSE 4.262e-05 (var 1.64e-02) | 255s
+pretrain v epoch 250/500 | MSE 3.699e-05 (var 1.64e-02) | 263s
+pretrain v epoch 275/500 | MSE 3.011e-05 (var 1.64e-02) | 272s
+pretrain v epoch 300/500 | MSE 2.573e-05 (var 1.64e-02) | 280s
+pretrain v epoch 325/500 | MSE 2.096e-05 (var 1.64e-02) | 289s
+pretrain v epoch 350/500 | MSE 1.841e-05 (var 1.64e-02) | 297s
+pretrain v epoch 375/500 | MSE 1.654e-05 (var 1.64e-02) | 306s
+pretrain v epoch 400/500 | MSE 1.486e-05 (var 1.64e-02) | 314s
+pretrain v epoch 425/500 | MSE 1.379e-05 (var 1.64e-02) | 323s
+pretrain v epoch 450/500 | MSE 1.306e-05 (var 1.64e-02) | 331s
+pretrain v epoch 475/500 | MSE 1.267e-05 (var 1.64e-02) | 339s
+pretrain v epoch 500/500 | MSE 1.248e-05 (var 1.64e-02) | 348s
+step 100/15000 | data 9.644e-03 | pde 5.625e-02 | Du L_norm grid 97.09% monitor 97.41% | Dv 1.2791e-05 | 3s
+step 200/15000 | data 8.433e-03 | pde 3.890e-02 | Du L_norm grid 106.75% monitor 107.43% | Dv 1.2615e-05 | 6s
+step 300/15000 | data 8.059e-03 | pde 3.910e-02 | Du L_norm grid 110.74% monitor 111.57% | Dv 1.2453e-05 | 9s
+step 400/15000 | data 7.712e-03 | pde 3.762e-02 | Du L_norm grid 111.54% monitor 112.44% | Dv 1.2299e-05 | 11s
+step 500/15000 | data 7.315e-03 | pde 3.324e-02 | Du L_norm grid 108.94% monitor 109.85% | Dv 1.2156e-05 | 14s
+step 600/15000 | data 8.049e-03 | pde 3.021e-02 | Du L_norm grid 105.31% monitor 106.26% | Dv 1.2019e-05 | 17s
+step 700/15000 | data 6.925e-03 | pde 3.281e-02 | Du L_norm grid 99.67% monitor 100.65% | Dv 1.1881e-05 | 20s
+step 800/15000 | data 6.966e-03 | pde 2.807e-02 | Du L_norm grid 88.61% monitor 89.60% | Dv 1.1747e-05 | 23s
+step 900/15000 | data 6.538e-03 | pde 2.816e-02 | Du L_norm grid 75.80% monitor 76.81% | Dv 1.1624e-05 | 26s
+step 1000/15000 | data 9.911e-03 | pde 4.703e-02 | Du L_norm grid 58.21% monitor 59.02% | Dv 1.1514e-05 | 29s
+step 1100/15000 | data 6.245e-03 | pde 2.977e-02 | Du L_norm grid 50.84% monitor 51.70% | Dv 1.1440e-05 | 32s
+step 1200/15000 | data 6.383e-03 | pde 2.783e-02 | Du L_norm grid 47.01% monitor 47.90% | Dv 1.1372e-05 | 35s
+step 1300/15000 | data 6.003e-03 | pde 2.760e-02 | Du L_norm grid 42.64% monitor 43.51% | Dv 1.1308e-05 | 37s
+step 1400/15000 | data 6.093e-03 | pde 2.772e-02 | Du L_norm grid 40.14% monitor 41.00% | Dv 1.1249e-05 | 40s
+step 1500/15000 | data 5.265e-03 | pde 2.553e-02 | Du L_norm grid 37.54% monitor 38.36% | Dv 1.1194e-05 | 43s
+step 1600/15000 | data 5.266e-03 | pde 2.624e-02 | Du L_norm grid 35.75% monitor 36.54% | Dv 1.1146e-05 | 46s
+step 1700/15000 | data 5.501e-03 | pde 2.881e-02 | Du L_norm grid 34.11% monitor 34.89% | Dv 1.1102e-05 | 49s
+step 1800/15000 | data 5.533e-03 | pde 2.905e-02 | Du L_norm grid 32.59% monitor 33.33% | Dv 1.1063e-05 | 52s
+step 1900/15000 | data 5.431e-03 | pde 2.689e-02 | Du L_norm grid 31.72% monitor 32.43% | Dv 1.1026e-05 | 54s
+step 2000/15000 | data 5.115e-03 | pde 2.489e-02 | Du L_norm grid 30.86% monitor 31.55% | Dv 1.0991e-05 | 57s
+step 2100/15000 | data 6.239e-03 | pde 4.178e-02 | Du L_norm grid 26.39% monitor 26.90% | Dv 1.0959e-05 | 60s
+step 2200/15000 | data 5.401e-03 | pde 2.190e-02 | Du L_norm grid 25.50% monitor 26.04% | Dv 1.0944e-05 | 63s
+step 2300/15000 | data 5.538e-03 | pde 3.014e-02 | Du L_norm grid 25.03% monitor 25.54% | Dv 1.0925e-05 | 66s
+step 2400/15000 | data 5.718e-03 | pde 2.785e-02 | Du L_norm grid 24.74% monitor 25.25% | Dv 1.0907e-05 | 69s
+step 2500/15000 | data 5.664e-03 | pde 2.760e-02 | Du L_norm grid 24.46% monitor 24.96% | Dv 1.0891e-05 | 71s
+step 2600/15000 | data 5.422e-03 | pde 2.606e-02 | Du L_norm grid 24.90% monitor 25.42% | Dv 1.0876e-05 | 74s
+step 2700/15000 | data 5.205e-03 | pde 2.773e-02 | Du L_norm grid 23.93% monitor 24.41% | Dv 1.0863e-05 | 77s
+step 2800/15000 | data 5.072e-03 | pde 2.728e-02 | Du L_norm grid 23.47% monitor 23.93% | Dv 1.0850e-05 | 80s
+step 2900/15000 | data 5.455e-03 | pde 2.950e-02 | Du L_norm grid 22.94% monitor 23.38% | Dv 1.0839e-05 | 82s
+step 3000/15000 | data 5.078e-03 | pde 2.686e-02 | Du L_norm grid 22.97% monitor 23.41% | Dv 1.0829e-05 | 85s
+step 3100/15000 | data 5.035e-03 | pde 2.531e-02 | Du L_norm grid 22.20% monitor 22.61% | Dv 1.0821e-05 | 88s
+step 3200/15000 | data 4.545e-03 | pde 2.332e-02 | Du L_norm grid 22.93% monitor 23.38% | Dv 1.0814e-05 | 91s
+step 3300/15000 | data 4.829e-03 | pde 2.073e-02 | Du L_norm grid 22.70% monitor 23.14% | Dv 1.0805e-05 | 93s
+step 3400/15000 | data 5.067e-03 | pde 2.100e-02 | Du L_norm grid 22.88% monitor 23.31% | Dv 1.0798e-05 | 96s
+step 3500/15000 | data 4.444e-03 | pde 2.186e-02 | Du L_norm grid 23.03% monitor 23.47% | Dv 1.0791e-05 | 99s
+step 3600/15000 | data 4.508e-03 | pde 2.482e-02 | Du L_norm grid 21.08% monitor 21.46% | Dv 1.0785e-05 | 102s
+step 3700/15000 | data 4.904e-03 | pde 2.344e-02 | Du L_norm grid 20.12% monitor 20.50% | Dv 1.0783e-05 | 105s
+step 3800/15000 | data 5.695e-03 | pde 2.522e-02 | Du L_norm grid 19.25% monitor 19.56% | Dv 1.0779e-05 | 108s
+step 3900/15000 | data 4.210e-03 | pde 2.044e-02 | Du L_norm grid 20.13% monitor 20.51% | Dv 1.0785e-05 | 110s
+step 4000/15000 | data 4.443e-03 | pde 2.045e-02 | Du L_norm grid 21.61% monitor 22.04% | Dv 1.0781e-05 | 113s
+step 4100/15000 | data 4.793e-03 | pde 1.992e-02 | Du L_norm grid 21.91% monitor 22.36% | Dv 1.0776e-05 | 116s
+step 4200/15000 | data 4.301e-03 | pde 2.006e-02 | Du L_norm grid 21.80% monitor 22.24% | Dv 1.0769e-05 | 119s
+step 4300/15000 | data 4.241e-03 | pde 2.218e-02 | Du L_norm grid 21.27% monitor 21.69% | Dv 1.0764e-05 | 121s
+step 4400/15000 | data 4.664e-03 | pde 2.157e-02 | Du L_norm grid 21.42% monitor 21.85% | Dv 1.0760e-05 | 124s
+step 4500/15000 | data 4.393e-03 | pde 1.793e-02 | Du L_norm grid 20.99% monitor 21.40% | Dv 1.0756e-05 | 127s
+step 4600/15000 | data 3.969e-03 | pde 1.807e-02 | Du L_norm grid 21.05% monitor 21.48% | Dv 1.0753e-05 | 130s
+step 4700/15000 | data 4.984e-03 | pde 2.273e-02 | Du L_norm grid 19.48% monitor 19.86% | Dv 1.0751e-05 | 133s
+step 4800/15000 | data 6.396e-03 | pde 5.058e-02 | Du L_norm grid 16.16% monitor 16.37% | Dv 1.0756e-05 | 136s
+step 4900/15000 | data 5.668e-03 | pde 2.889e-02 | Du L_norm grid 17.12% monitor 17.41% | Dv 1.0768e-05 | 139s
+step 5000/15000 | data 5.577e-03 | pde 3.567e-02 | Du L_norm grid 18.49% monitor 18.83% | Dv 1.0778e-05 | 141s
+step 5100/15000 | data 4.864e-03 | pde 1.934e-02 | Du L_norm grid 18.25% monitor 18.55% | Dv 1.0782e-05 | 144s
+step 5200/15000 | data 4.861e-03 | pde 2.054e-02 | Du L_norm grid 19.13% monitor 19.48% | Dv 1.0781e-05 | 147s
+step 5300/15000 | data 4.669e-03 | pde 2.012e-02 | Du L_norm grid 18.69% monitor 19.03% | Dv 1.0778e-05 | 150s
+step 5400/15000 | data 4.456e-03 | pde 2.047e-02 | Du L_norm grid 19.13% monitor 19.48% | Dv 1.0776e-05 | 153s
+step 5500/15000 | data 4.678e-03 | pde 1.938e-02 | Du L_norm grid 19.26% monitor 19.63% | Dv 1.0774e-05 | 156s
+step 5600/15000 | data 4.254e-03 | pde 1.965e-02 | Du L_norm grid 18.99% monitor 19.36% | Dv 1.0771e-05 | 159s
+step 5700/15000 | data 4.671e-03 | pde 1.933e-02 | Du L_norm grid 18.93% monitor 19.30% | Dv 1.0769e-05 | 161s
+step 5800/15000 | data 4.392e-03 | pde 1.815e-02 | Du L_norm grid 19.50% monitor 19.89% | Dv 1.0766e-05 | 165s
+step 5900/15000 | data 4.286e-03 | pde 1.903e-02 | Du L_norm grid 19.01% monitor 19.38% | Dv 1.0765e-05 | 168s
+step 6000/15000 | data 4.503e-03 | pde 1.916e-02 | Du L_norm grid 19.21% monitor 19.60% | Dv 1.0763e-05 | 170s
+step 6100/15000 | data 4.312e-03 | pde 1.754e-02 | Du L_norm grid 19.64% monitor 20.04% | Dv 1.0760e-05 | 173s
+step 6200/15000 | data 4.220e-03 | pde 1.705e-02 | Du L_norm grid 19.10% monitor 19.48% | Dv 1.0759e-05 | 176s
+step 6300/15000 | data 4.337e-03 | pde 1.621e-02 | Du L_norm grid 19.18% monitor 19.57% | Dv 1.0758e-05 | 179s
+step 6400/15000 | data 4.750e-03 | pde 1.869e-02 | Du L_norm grid 17.16% monitor 17.52% | Dv 1.0757e-05 | 182s
+step 6500/15000 | data 4.181e-03 | pde 1.527e-02 | Du L_norm grid 19.77% monitor 20.19% | Dv 1.0761e-05 | 185s
+step 6600/15000 | data 4.341e-03 | pde 1.469e-02 | Du L_norm grid 19.57% monitor 19.98% | Dv 1.0760e-05 | 188s
+step 6700/15000 | data 3.890e-03 | pde 1.518e-02 | Du L_norm grid 20.17% monitor 20.59% | Dv 1.0757e-05 | 191s
+step 6800/15000 | data 3.788e-03 | pde 1.439e-02 | Du L_norm grid 20.18% monitor 20.61% | Dv 1.0754e-05 | 194s
+step 6900/15000 | data 3.850e-03 | pde 1.351e-02 | Du L_norm grid 19.96% monitor 20.38% | Dv 1.0751e-05 | 197s
+step 7000/15000 | data 3.656e-03 | pde 1.460e-02 | Du L_norm grid 19.79% monitor 20.21% | Dv 1.0751e-05 | 200s
+step 7100/15000 | data 3.965e-03 | pde 1.502e-02 | Du L_norm grid 19.60% monitor 20.02% | Dv 1.0748e-05 | 203s
+step 7200/15000 | data 4.330e-03 | pde 1.757e-02 | Du L_norm grid 18.12% monitor 18.50% | Dv 1.0750e-05 | 206s
+step 7300/15000 | data 3.708e-03 | pde 1.519e-02 | Du L_norm grid 18.12% monitor 18.51% | Dv 1.0752e-05 | 209s
+step 7400/15000 | data 3.584e-03 | pde 1.371e-02 | Du L_norm grid 18.57% monitor 18.97% | Dv 1.0753e-05 | 211s
+step 7500/15000 | data 3.740e-03 | pde 1.433e-02 | Du L_norm grid 18.69% monitor 19.09% | Dv 1.0753e-05 | 214s
+step 7600/15000 | data 3.750e-03 | pde 1.362e-02 | Du L_norm grid 19.17% monitor 19.58% | Dv 1.0752e-05 | 217s
+step 7700/15000 | data 3.795e-03 | pde 1.361e-02 | Du L_norm grid 19.26% monitor 19.68% | Dv 1.0750e-05 | 220s
+step 7800/15000 | data 4.062e-03 | pde 1.350e-02 | Du L_norm grid 19.19% monitor 19.61% | Dv 1.0749e-05 | 223s
+step 7900/15000 | data 4.161e-03 | pde 1.294e-02 | Du L_norm grid 19.32% monitor 19.74% | Dv 1.0748e-05 | 226s
+step 8000/15000 | data 3.691e-03 | pde 1.328e-02 | Du L_norm grid 19.47% monitor 19.89% | Dv 1.0747e-05 | 229s
+step 8100/15000 | data 3.807e-03 | pde 1.331e-02 | Du L_norm grid 19.38% monitor 19.81% | Dv 1.0746e-05 | 232s
+step 8200/15000 | data 3.969e-03 | pde 1.288e-02 | Du L_norm grid 19.63% monitor 20.05% | Dv 1.0745e-05 | 235s
+step 8300/15000 | data 3.259e-03 | pde 1.224e-02 | Du L_norm grid 19.50% monitor 19.92% | Dv 1.0744e-05 | 238s
+step 8400/15000 | data 3.970e-03 | pde 1.330e-02 | Du L_norm grid 19.31% monitor 19.73% | Dv 1.0744e-05 | 241s
+step 8500/15000 | data 4.011e-03 | pde 1.253e-02 | Du L_norm grid 19.41% monitor 19.84% | Dv 1.0743e-05 | 243s
+step 8600/15000 | data 3.822e-03 | pde 1.342e-02 | Du L_norm grid 19.71% monitor 20.14% | Dv 1.0742e-05 | 246s
+step 8700/15000 | data 4.221e-03 | pde 1.234e-02 | Du L_norm grid 19.85% monitor 20.29% | Dv 1.0742e-05 | 249s
+step 8800/15000 | data 3.830e-03 | pde 1.173e-02 | Du L_norm grid 19.74% monitor 20.18% | Dv 1.0742e-05 | 252s
+step 8900/15000 | data 3.696e-03 | pde 1.423e-02 | Du L_norm grid 19.47% monitor 19.91% | Dv 1.0741e-05 | 255s
+step 9000/15000 | data 3.869e-03 | pde 1.181e-02 | Du L_norm grid 19.98% monitor 20.42% | Dv 1.0740e-05 | 258s
+step 9100/15000 | data 3.953e-03 | pde 1.183e-02 | Du L_norm grid 20.04% monitor 20.48% | Dv 1.0739e-05 | 261s
+step 9200/15000 | data 3.952e-03 | pde 1.132e-02 | Du L_norm grid 19.76% monitor 20.20% | Dv 1.0738e-05 | 264s
+step 9300/15000 | data 3.698e-03 | pde 1.506e-02 | Du L_norm grid 19.50% monitor 19.94% | Dv 1.0737e-05 | 267s
+step 9400/15000 | data 3.456e-03 | pde 1.224e-02 | Du L_norm grid 19.49% monitor 19.93% | Dv 1.0738e-05 | 270s
+step 9500/15000 | data 3.527e-03 | pde 1.170e-02 | Du L_norm grid 19.92% monitor 20.36% | Dv 1.0738e-05 | 273s
+step 9600/15000 | data 3.679e-03 | pde 1.140e-02 | Du L_norm grid 19.73% monitor 20.17% | Dv 1.0738e-05 | 276s
+step 9700/15000 | data 3.752e-03 | pde 1.119e-02 | Du L_norm grid 20.05% monitor 20.49% | Dv 1.0737e-05 | 279s
+step 9800/15000 | data 3.470e-03 | pde 1.113e-02 | Du L_norm grid 19.65% monitor 20.09% | Dv 1.0737e-05 | 281s
+step 9900/15000 | data 3.479e-03 | pde 1.120e-02 | Du L_norm grid 19.95% monitor 20.39% | Dv 1.0736e-05 | 284s
+step 10000/15000 | data 3.451e-03 | pde 1.118e-02 | Du L_norm grid 20.12% monitor 20.57% | Dv 1.0736e-05 | 287s
+step 10100/15000 | data 3.867e-03 | pde 1.119e-02 | Du L_norm grid 19.89% monitor 20.33% | Dv 1.0736e-05 | 290s
+step 10200/15000 | data 3.501e-03 | pde 1.095e-02 | Du L_norm grid 20.24% monitor 20.69% | Dv 1.0735e-05 | 293s
+step 10300/15000 | data 3.820e-03 | pde 1.043e-02 | Du L_norm grid 19.67% monitor 20.11% | Dv 1.0734e-05 | 295s
+step 10400/15000 | data 3.753e-03 | pde 1.195e-02 | Du L_norm grid 20.26% monitor 20.70% | Dv 1.0734e-05 | 298s
+step 10500/15000 | data 3.720e-03 | pde 1.064e-02 | Du L_norm grid 20.05% monitor 20.49% | Dv 1.0734e-05 | 301s
+step 10600/15000 | data 3.289e-03 | pde 1.052e-02 | Du L_norm grid 20.37% monitor 20.82% | Dv 1.0734e-05 | 304s
+step 10700/15000 | data 3.611e-03 | pde 1.052e-02 | Du L_norm grid 20.31% monitor 20.76% | Dv 1.0733e-05 | 307s
+step 10800/15000 | data 3.691e-03 | pde 1.089e-02 | Du L_norm grid 20.11% monitor 20.55% | Dv 1.0732e-05 | 310s
+step 10900/15000 | data 3.477e-03 | pde 1.043e-02 | Du L_norm grid 20.42% monitor 20.87% | Dv 1.0732e-05 | 313s
+step 11000/15000 | data 3.887e-03 | pde 1.055e-02 | Du L_norm grid 20.26% monitor 20.72% | Dv 1.0732e-05 | 315s
+step 11100/15000 | data 3.549e-03 | pde 1.014e-02 | Du L_norm grid 19.79% monitor 20.24% | Dv 1.0732e-05 | 318s
+step 11200/15000 | data 3.718e-03 | pde 1.016e-02 | Du L_norm grid 20.21% monitor 20.66% | Dv 1.0733e-05 | 321s
+step 11300/15000 | data 3.310e-03 | pde 1.005e-02 | Du L_norm grid 20.76% monitor 21.22% | Dv 1.0732e-05 | 324s
+step 11400/15000 | data 3.572e-03 | pde 1.003e-02 | Du L_norm grid 20.43% monitor 20.88% | Dv 1.0731e-05 | 327s
+step 11500/15000 | data 3.690e-03 | pde 1.004e-02 | Du L_norm grid 20.30% monitor 20.76% | Dv 1.0730e-05 | 330s
+step 11600/15000 | data 3.327e-03 | pde 1.012e-02 | Du L_norm grid 20.58% monitor 21.03% | Dv 1.0730e-05 | 333s
+step 11700/15000 | data 3.547e-03 | pde 1.020e-02 | Du L_norm grid 20.59% monitor 21.05% | Dv 1.0731e-05 | 336s
+step 11800/15000 | data 3.306e-03 | pde 9.958e-03 | Du L_norm grid 20.97% monitor 21.43% | Dv 1.0731e-05 | 339s
+step 11900/15000 | data 3.348e-03 | pde 9.914e-03 | Du L_norm grid 20.64% monitor 21.09% | Dv 1.0731e-05 | 341s
+step 12000/15000 | data 3.478e-03 | pde 9.886e-03 | Du L_norm grid 20.58% monitor 21.03% | Dv 1.0730e-05 | 344s
+step 12100/15000 | data 3.801e-03 | pde 9.947e-03 | Du L_norm grid 20.75% monitor 21.21% | Dv 1.0730e-05 | 347s
+step 12200/15000 | data 3.290e-03 | pde 9.521e-03 | Du L_norm grid 20.78% monitor 21.24% | Dv 1.0731e-05 | 350s
+step 12300/15000 | data 3.476e-03 | pde 9.856e-03 | Du L_norm grid 20.61% monitor 21.07% | Dv 1.0730e-05 | 353s
+step 12400/15000 | data 3.417e-03 | pde 9.658e-03 | Du L_norm grid 20.82% monitor 21.28% | Dv 1.0730e-05 | 356s
+step 12500/15000 | data 3.595e-03 | pde 1.002e-02 | Du L_norm grid 20.72% monitor 21.18% | Dv 1.0730e-05 | 359s
+step 12600/15000 | data 3.479e-03 | pde 9.749e-03 | Du L_norm grid 20.74% monitor 21.20% | Dv 1.0730e-05 | 362s
+step 12700/15000 | data 3.684e-03 | pde 9.818e-03 | Du L_norm grid 20.56% monitor 21.01% | Dv 1.0730e-05 | 364s
+step 12800/15000 | data 3.382e-03 | pde 9.629e-03 | Du L_norm grid 20.53% monitor 20.99% | Dv 1.0729e-05 | 367s
+step 12900/15000 | data 3.583e-03 | pde 9.452e-03 | Du L_norm grid 20.69% monitor 21.14% | Dv 1.0729e-05 | 370s
+step 13000/15000 | data 3.463e-03 | pde 9.482e-03 | Du L_norm grid 20.68% monitor 21.14% | Dv 1.0729e-05 | 373s
+step 13100/15000 | data 3.302e-03 | pde 9.688e-03 | Du L_norm grid 20.66% monitor 21.12% | Dv 1.0729e-05 | 376s
+step 13200/15000 | data 3.665e-03 | pde 9.703e-03 | Du L_norm grid 20.73% monitor 21.19% | Dv 1.0729e-05 | 379s
+step 13300/15000 | data 3.502e-03 | pde 9.500e-03 | Du L_norm grid 20.41% monitor 20.87% | Dv 1.0729e-05 | 381s
+step 13400/15000 | data 3.688e-03 | pde 9.523e-03 | Du L_norm grid 20.44% monitor 20.90% | Dv 1.0729e-05 | 384s
+step 13500/15000 | data 3.483e-03 | pde 9.613e-03 | Du L_norm grid 20.77% monitor 21.23% | Dv 1.0728e-05 | 387s
+step 13600/15000 | data 3.469e-03 | pde 9.636e-03 | Du L_norm grid 20.81% monitor 21.27% | Dv 1.0728e-05 | 390s
+step 13700/15000 | data 3.526e-03 | pde 9.315e-03 | Du L_norm grid 20.55% monitor 21.00% | Dv 1.0728e-05 | 393s
+step 13800/15000 | data 3.379e-03 | pde 9.747e-03 | Du L_norm grid 20.64% monitor 21.10% | Dv 1.0729e-05 | 396s
+step 13900/15000 | data 3.429e-03 | pde 9.533e-03 | Du L_norm grid 20.63% monitor 21.09% | Dv 1.0729e-05 | 399s
+step 14000/15000 | data 3.303e-03 | pde 9.434e-03 | Du L_norm grid 20.65% monitor 21.10% | Dv 1.0729e-05 | 401s
+step 14100/15000 | data 3.271e-03 | pde 9.341e-03 | Du L_norm grid 20.44% monitor 20.89% | Dv 1.0729e-05 | 404s
+step 14200/15000 | data 3.395e-03 | pde 9.335e-03 | Du L_norm grid 20.63% monitor 21.09% | Dv 1.0729e-05 | 407s
+step 14300/15000 | data 3.379e-03 | pde 9.392e-03 | Du L_norm grid 20.56% monitor 21.02% | Dv 1.0729e-05 | 410s
+step 14400/15000 | data 3.622e-03 | pde 9.294e-03 | Du L_norm grid 20.62% monitor 21.08% | Dv 1.0729e-05 | 413s
+step 14500/15000 | data 3.436e-03 | pde 9.460e-03 | Du L_norm grid 20.70% monitor 21.15% | Dv 1.0729e-05 | 415s
+step 14600/15000 | data 3.273e-03 | pde 9.504e-03 | Du L_norm grid 20.67% monitor 21.13% | Dv 1.0729e-05 | 418s
+step 14700/15000 | data 3.335e-03 | pde 9.505e-03 | Du L_norm grid 20.70% monitor 21.16% | Dv 1.0729e-05 | 421s
+step 14800/15000 | data 3.347e-03 | pde 9.539e-03 | Du L_norm grid 20.66% monitor 21.12% | Dv 1.0729e-05 | 424s
+step 14900/15000 | data 3.601e-03 | pde 9.473e-03 | Du L_norm grid 20.69% monitor 21.15% | Dv 1.0729e-05 | 427s
+step 15000/15000 | data 3.588e-03 | pde 9.696e-03 | Du L_norm grid 20.66% monitor 21.12% | Dv 1.0729e-05 | 430s
+{
+ "Du_Lnorm_grid_pct": 20.65986139772257,
+ "Du_Lnorm_monitor_pct": 21.11733103106463,
+ "best_Lnorm_grid_pct": 16.13764633011731,
+ "Dv": 1.0728503184509464e-05,
+ "Dv_rel_err_pct": 7.285031845094636,
+ "stageB_s": 429.6029326915741,
+ "pretrain_s": 347.9816744327545
+}
