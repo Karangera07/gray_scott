@@ -55,7 +55,7 @@ elif param == 3:
 
 # Importing Data
 
-file_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\data\\data_{param}.txt"
+file_path = f"C:\\Users\\GPU2\\gray_scott_projects\\gray_scott\\data\\param{param}\\D1\\data_{param}.txt"   # D1 = current Du field
 
 # Generate column names
 times = range(0, 3001, 10)

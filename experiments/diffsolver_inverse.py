@@ -37,7 +37,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--param", type=int, default=1)
 ap.add_argument("--F", type=float, default=None, help="override feed rate")
 ap.add_argument("--k", type=float, default=None, help="override kill rate")
-ap.add_argument("--data", type=str, default=None, help="path to COMSOL txt (default data/data_{param}.txt)")
+ap.add_argument("--data", type=str, default=None, help="path to COMSOL txt (default data/param{param}/D1/data_{param}.txt)")
 ap.add_argument("--N", type=int, default=160, help="fine solver grid (N x N cells)")
 ap.add_argument("--horizon", type=int, default=2, help="window length in data intervals (x10 time units)")
 ap.add_argument("--order", type=int, default=4, choices=[2, 4], help="spatial order of the solver")
@@ -82,7 +82,7 @@ print(f"device {dev} | case {args.param} F={F} k={k} | out {out_dir}", flush=Tru
 def load_grid():
     cache_dir = args.cache or os.path.join(HERE, "cache")
     os.makedirs(cache_dir, exist_ok=True)
-    src = args.data or os.path.join(ROOT, "data", f"data_{args.param}.txt")
+    src = args.data or os.path.join(ROOT, "data", f"param{args.param}", "D1", f"data_{args.param}.txt")
     cpath = os.path.join(cache_dir, os.path.basename(src).replace(".txt", "_grid.npz"))
     if os.path.exists(cpath):
         g = np.load(cpath); return g["xs"], g["ys"], g["t"], g["U"], g["V"]
