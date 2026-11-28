@@ -10,22 +10,21 @@ Methods 1-2 need the curvature of the data and stall at ~15-25% even with the ex
 functional form of Du. Method 3 only needs data *values* and recovers b to <1-3%.
 
 Run:  python experiments/diagnose_floor.py --param 1
-(needs experiments/cache/data_{p}_grid.npz, created by diffsolver_inverse.py, or --data)
+(D1 / zero-flux data only: the analysis assumes Du = a + b sin(pi x) sin(pi y))
 """
-import argparse, os
+import argparse, os, sys
 import numpy as np
 import scipy.sparse as sp
 from scipy.interpolate import CubicSpline, RectBivariateSpline as RBS
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-FK = {1: (0.037, 0.06), 2: (0.014, 0.045), 3: (0.018, 0.051)}
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+from gs_data import load, FK
 ap = argparse.ArgumentParser()
 ap.add_argument("--param", type=int, default=1)
-ap.add_argument("--cache", type=str, default=os.path.join(HERE, "cache"))
 ap.add_argument("--N", type=int, default=160)
 args = ap.parse_args()
 p = args.param; F, k = FK[p]
-g = np.load(os.path.join(args.cache, f"data_{p}_grid.npz"))
+g = load(p, "noflux", 1)
 xs, ys, U, V = g["xs"], g["ys"], g["U"], g["V"]
 X, Y = np.meshgrid(xs, ys, indexing="ij"); s = np.sin(np.pi * X) * np.sin(np.pi * Y)
 Dut = 2e-5 * (1 + s)

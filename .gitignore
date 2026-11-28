@@ -1,0 +1,7 @@
+data/.cache/
+# raw COMSOL exports stay local (4.6 GB); the compact .npz next to each is committed via LFS
+data/**/*.txt
+comsol/*.mph
+texput.log
+# report is never pushed
+experiments/report/

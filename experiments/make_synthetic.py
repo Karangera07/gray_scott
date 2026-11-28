@@ -13,10 +13,11 @@ import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from gs_solver import spline_matrix, divflux4, STAB
+from gs_data import load, Du_true, FK
 
-FK = {1: (0.037, 0.06), 2: (0.014, 0.045), 3: (0.018, 0.051)}
 ap = argparse.ArgumentParser()
-ap.add_argument("--param", type=int, default=1)
+ap.add_argument("--param", type=int, default=1, choices=sorted(FK))
+ap.add_argument("--dcase", type=int, default=1, help="true Du field (gs_data.py); zero-flux walls")
 ap.add_argument("--Ngen", type=int, default=320, help="generator grid")
 ap.add_argument("--Nsolver", type=int, default=160, help="grid of the inverse solver (for exact start states)")
 ap.add_argument("--cfl", type=float, default=0.5)
@@ -27,12 +28,12 @@ args = ap.parse_args()
 F, k = FK[args.param]
 dev = torch.device(args.device); dt64 = torch.float64
 
-g = np.load(os.path.join(HERE, "cache", f"data_{args.param}_grid.npz"))   # only for the node layout
+g = load(args.param, "noflux", 1)   # only for the node layout
 xs, ys = g["xs"], g["ys"]
 N = args.Ngen; h = 1.0 / N; xc = (np.arange(N) + 0.5) * h
 X, Y = np.meshgrid(xc, xc, indexing="ij")
 
-def Du(x, y): return 2e-5 * (1 + np.sin(np.pi * x) * np.sin(np.pi * y))
+def Du(x, y): return Du_true(x, y, args.dcase)
 Dv = 1e-5
 xf = np.arange(N + 1) * h
 Dfx = torch.tensor(Du(xf[:, None], xc[None]), dtype=dt64, device=dev)
@@ -66,9 +67,10 @@ for it in range(nt):
     Uf[it] = (Sx @ u[0] @ Sx.T).cpu().numpy(); Vf[it] = (Sx @ v[0] @ Sx.T).cpu().numpy()
     if it % 50 == 0:
         print(f"t={it*dt_out:6.0f}  u[{U[it].min():.3f},{U[it].max():.3f}] v[{V[it].min():.3f},{V[it].max():.3f}]  {time.time()-t0:.0f}s", flush=True)
-out = args.out or os.path.join(HERE, "cache", f"synthetic_p{args.param}.npz")
+os.makedirs(os.path.join(HERE, "cache"), exist_ok=True)
+out = args.out or os.path.join(HERE, "cache", f"synthetic_p{args.param}" + (f"_D{args.dcase}" if args.dcase != 1 else "") + ".npz")
 np.savez(out, xs=xs, ys=ys, t=np.arange(nt) * dt_out, U=U, V=V, Ufine=Uf, Vfine=Vf,
-         F=F, k=k, Ngen=N, Nsolver=Ns)
+         F=F, k=k, Ngen=N, Nsolver=Ns, dcase=args.dcase)
 print("saved", out)
 try:
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt

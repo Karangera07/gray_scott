@@ -14,10 +14,10 @@ model.pt.  Log: pass stdout to a file.
 import os, sys, json, math, time, argparse
 import numpy as np, pandas as pd, torch, torch.nn as nn
 
-HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE); sys.path.insert(0, HERE)
+from gs_data import add_data_args, load, Du_true, case_tag, FK
 ap = argparse.ArgumentParser()
-ap.add_argument("--param", type=int, default=1)
-ap.add_argument("--dcase", type=int, default=1, help="data/param{p}/D{dcase}/ (D1 = current Du field)")
+add_data_args(ap)   # --param (F,k) 1-4, --bc noflux|dirichlet, --dcase 1|3|4|6 (the PINN imposes no BC)
 ap.add_argument("--n_data", type=int, default=10000)
 ap.add_argument("--pre_epochs", type=int, default=500)
 ap.add_argument("--pretrained", type=str, default=None, help="skip pre-training and load u_nn/v_nn from this .pt")
@@ -27,22 +27,23 @@ ap.add_argument("--seed", type=int, default=0)
 ap.add_argument("--tag", type=str, default="")
 args = ap.parse_args()
 
-FK = {1: (0.037, 0.060), 2: (0.014, 0.045), 3: (0.018, 0.051)}
 F, k = FK[args.param]
 torch.manual_seed(args.seed); np.random.seed(args.seed)
 dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-out = os.path.join(HERE, "results", f"cons_pinn_p{args.param}{args.tag}"); os.makedirs(out, exist_ok=True)
+out = os.path.join(HERE, "results", f"cons_pinn_p{args.param}{case_tag(args.bc, args.dcase)}{args.tag}"); os.makedirs(out, exist_ok=True)
 print(f"device {dev} | case {args.param} F={F} k={k} | out {out}", flush=True)
 
 x_min, x_max, y_min, y_max, t_min, t_max = 0.0, 1.0, 0.0, 1.0, 0.0, 3000.0
 def normalize(x, a, b): return 2.0 * (x - a) / (b - a) - 1.0
 
 # ------------------------------------------------------------------ data (as in the original scripts)
-src = os.path.join(ROOT, "data", f"param{args.param}", f"D{args.dcase}", f"data_{args.param}.txt")
-times = np.arange(0, 3001, 10)
-cols = ["x", "y"] + [c for t in times for c in (f"u_{t}", f"v_{t}")]
-df = pd.read_csv(src, sep=r"\s+", comment="%", header=None, names=cols)
-print("data", src, df.shape, flush=True)
+dd = load(args.param, args.bc, args.dcase)
+times = dd["t"].astype(int)
+Xg, Yg = np.meshgrid(dd["xs"], dd["ys"], indexing="ij")
+df = pd.DataFrame({"x": Xg.ravel(), "y": Yg.ravel(),
+                   **{f"u_{t}": dd["U"][i].ravel() for i, t in enumerate(times)},
+                   **{f"v_{t}": dd["V"][i].ravel() for i, t in enumerate(times)}})
+print("data", dd["path"], df.shape, flush=True)
 u_s = df[["x", "y"] + [f"u_{t}" for t in times]].sample(n=args.n_data, random_state=42)
 v_s = df[["x", "y"] + [f"v_{t}" for t in times]].sample(n=args.n_data, random_state=42)
 def flat(s, p):
@@ -94,7 +95,7 @@ t_pre = time.time() - t0
 
 # ------------------------------------------------------------------ Du error monitors
 xs = df["x"].values; ys = df["y"].values
-Dtrue_all = 2e-5 * (1 + np.sin(np.pi * xs) * np.sin(np.pi * ys))
+Dtrue_all = Du_true(xs, ys, args.dcase)
 XY_all = torch.tensor(np.column_stack([normalize(xs, x_min, x_max), normalize(ys, y_min, y_max)]), dtype=torch.float32, device=dev)
 mon = np.random.RandomState(0).choice(len(df), 5000, replace=False)
 @torch.no_grad()

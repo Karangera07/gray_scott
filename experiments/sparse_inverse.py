@@ -19,6 +19,7 @@ Sparsity controls:
   --max_gap     longest window (time units) used for shooting
 
   python experiments/sparse_inverse.py --param 1 --space_frac 0.1 --time_frac 0.5
+  python experiments/sparse_inverse.py --param 2 --bc dirichlet --dcase 3 --space_frac 0.1
 """
 import argparse, json, math, os, sys, time
 import numpy as np
@@ -27,10 +28,10 @@ import torch.nn as nn
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from gs_solver import spline_matrix, divflux4, STAB
+from gs_data import add_data_args, load, Du_true as _Du_true, case_tag, FK
 
-FK = {1: (0.037, 0.06), 2: (0.014, 0.045), 3: (0.018, 0.051)}
 ap = argparse.ArgumentParser()
-ap.add_argument("--param", type=int, default=1)
+add_data_args(ap)   # --param (F,k) 1-4, --bc noflux|dirichlet, --dcase 1|3|4|6
 ap.add_argument("--synthetic", type=str, default=None, help="npz from make_synthetic.py instead of COMSOL")
 ap.add_argument("--space_frac", type=float, default=1.0)
 ap.add_argument("--space_mode", type=str, default="fixed", choices=["fixed", "random"])
@@ -62,15 +63,16 @@ torch.manual_seed(args.seed); rng = np.random.RandomState(args.seed)
 dev = torch.device(args.device)
 T32 = lambda a: torch.tensor(a, dtype=torch.float32, device=dev)
 src = "syn" if args.synthetic else "comsol"
-out_dir = args.out or os.path.join(HERE, "results", f"sparse_{src}_p{args.param}_s{args.space_frac:g}{args.space_mode[0]}_t{args.time_frac:g}{args.tag}")
+out_dir = args.out or os.path.join(HERE, "results", f"sparse_{src}_p{args.param}{case_tag(args.bc, args.dcase) if not args.synthetic else ''}_s{args.space_frac:g}{args.space_mode[0]}_t{args.time_frac:g}{args.tag}")
 os.makedirs(out_dir, exist_ok=True)
 
 # ------------------------------------------------------------------ data + sparse sampling
 if args.synthetic:
     d = np.load(args.synthetic); F, k = float(d["F"]), float(d["k"])
 else:
-    d = np.load(os.path.join(HERE, "cache", f"data_{args.param}_grid.npz")); F, k = FK[args.param]
+    d = load(args.param, args.bc, args.dcase); F, k = d["F"], d["k"]
 xs, ys, tdat, U, V = d["xs"], d["ys"], d["t"], d["U"], d["V"]
+DIRICHLET = args.bc == "dirichlet" and not args.synthetic
 nx, ny, nt = len(xs), len(ys), len(tdat)
 n_nodes = nx * ny
 keep_t = np.sort(rng.choice(nt, max(2, int(round(args.time_frac * nt))), replace=False))
@@ -89,7 +91,7 @@ sig_u, sig_v = float(OBS[:, 3].std()), float(OBS[:, 4].std())
 pairs = [(int(a), int(b)) for a, b in zip(keep_t[:-1], keep_t[1:])
          if tdat[a] >= args.t_start and tdat[b] - tdat[a] <= args.max_gap + 1e-9]
 assert pairs, "no shooting windows: increase --time_frac or --max_gap"
-print(f"device {dev} | {src} case {args.param} F={F} k={k} | {len(keep_t)}/{nt} times, {n_obs}/{n_nodes} nodes "
+print(f"device {dev} | {src} case {args.param} F={F} k={k} bc {args.bc} D{args.dcase} | {len(keep_t)}/{nt} times, {n_obs}/{n_nodes} nodes "
       f"({args.space_mode}) -> {len(OBS)} samples ({100*len(OBS)/(nt*n_nodes):.2f}% of full) | {len(pairs)} windows | out {out_dir}", flush=True)
 
 # ------------------------------------------------------------------ models
@@ -128,7 +130,11 @@ print(f"trainable parameters: field {n_par(field)}, Du_net {n_par(Du_nn)}, Dv 1"
 N = args.N; hx, hy = (xs[-1] - xs[0]) / N, (ys[-1] - ys[0]) / N
 xc = xs[0] + (np.arange(N) + 0.5) * hx; yc = ys[0] + (np.arange(N) + 0.5) * hy
 Xc, Yc = torch.meshgrid(T32(xc), T32(yc), indexing="ij")
-Px, Py = T32(spline_matrix(xc, xs)), T32(spline_matrix(yc, ys))     # solver grid -> data nodes
+if DIRICHLET:   # solver grid -> data nodes through the known wall values u = v = 0
+    Px = T32(spline_matrix(np.r_[xs[0], xc, xs[-1]], xs, "natural")[:, 1:-1])
+    Py = T32(spline_matrix(np.r_[ys[0], yc, ys[-1]], ys, "natural")[:, 1:-1])
+else:
+    Px, Py = T32(spline_matrix(xc, xs)), T32(spline_matrix(yc, ys))     # solver grid -> data nodes
 def grid_in(xv, yv):
     X, Y = torch.meshgrid(T32(xv), T32(yv), indexing="ij")
     return torch.stack([norm(X, xs[0], xs[-1]), norm(Y, ys[0], ys[-1])], -1)
@@ -139,8 +145,8 @@ Ud, Vd = T32(Uf), T32(Vf)
 def rollout(u, v, Dfx, Dfy, Dv, n_sub, dt):
     for _ in range(n_sub):
         uv2 = u * v * v
-        u, v = (u + dt * (divflux4(u, Dfx, Dfy, hx, hy) - uv2 + F * (1 - u)),
-                v + dt * (Dv * divflux4(v, 1.0, 1.0, hx, hy) + uv2 - (F + k) * v))
+        u, v = (u + dt * (divflux4(u, Dfx, Dfy, hx, hy, DIRICHLET) - uv2 + F * (1 - u)),
+                v + dt * (Dv * divflux4(v, 1.0, 1.0, hx, hy, DIRICHLET) + uv2 - (F + k) * v))
     return u, v
 
 def fit_loss():
@@ -167,7 +173,7 @@ def shoot_loss():
     return tot / args.batch
 
 # ------------------------------------------------------------------ monitoring (truth used ONLY for reporting)
-Du_true = 2e-5 * (1 + np.sin(np.pi * Xn.reshape(nx, ny)) * np.sin(np.pi * Yn.reshape(nx, ny)))
+Du_true = _Du_true(Xn.reshape(nx, ny), Yn.reshape(nx, ny), (int(d["dcase"]) if "dcase" in d.files else 1) if args.synthetic else args.dcase)
 Xdat = grid_in(xs, ys)
 @torch.no_grad()
 def report():
@@ -209,7 +215,7 @@ for it in range(1, args.iters + 1):
         print(f"converged (loss plateau) at it {it}"); break
 
 Lp, fe, Dp = report()
-res = dict(source=src, case=args.param, space_frac=args.space_frac, space_mode=args.space_mode, time_frac=args.time_frac,
+res = dict(source=src, case=args.param, bc=args.bc, dcase=args.dcase, space_frac=args.space_frac, space_mode=args.space_mode, time_frac=args.time_frac,
            n_samples=int(len(OBS)), sample_pct=100 * len(OBS) / (nt * n_nodes), n_windows=len(pairs),
            params_field=n_par(field), params_Du=n_par(Du_nn), iters_run=it, time_s=time.time() - t0,
            Du_Lpaper_pct=100 * Lp, Dv=Dv_nn.value().item(), Dv_rel_err_pct=100 * (Dv_nn.value().item() / 1e-5 - 1),

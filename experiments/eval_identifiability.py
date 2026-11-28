@@ -15,6 +15,7 @@ import torch.nn as nn
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from gs_solver import spline_matrix, divflux2, divflux4, STAB
+from gs_data import load, Du_true, FK
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--run", required=True, help="result folder containing D_model.pt")
@@ -26,7 +27,8 @@ ap.add_argument("--only_true", action="store_true", help="only evaluate the loss
 a = ap.parse_args()
 dev = torch.device(a.device)
 ck = torch.load(os.path.join(a.run, "D_model.pt"), map_location=dev)
-args = argparse.Namespace(**{"synthetic": None, "order": 2, "start": "data", "burn": 0, **ck["args"]})
+args = argparse.Namespace(**{"synthetic": None, "order": 2, "start": "data", "burn": 0, "bc": "noflux", "dcase": 1,
+                              "data": None, **ck["args"]})
 if a.N: args.N = a.N
 if a.cfl: args.cfl = a.cfl
 T32 = lambda z: torch.tensor(z, dtype=torch.float32, device=dev)
@@ -35,12 +37,18 @@ if args.synthetic:
     syn = np.load(args.synthetic if os.path.isabs(args.synthetic) else os.path.join(os.path.dirname(HERE), args.synthetic))
     xs, ys, tdat, U, V = syn["xs"], syn["ys"], syn["t"], syn["U"], syn["V"]; F, k = float(syn["F"]), float(syn["k"])
 else:
-    g = np.load(os.path.join(HERE, "cache", f"data_{args.param}_grid.npz"))
+    g = load(args.param, args.bc, args.dcase, path=args.data)
     xs, ys, tdat, U, V = g["xs"], g["ys"], g["t"], g["U"], g["V"]
-    F, k = {1: (0.037, 0.06), 2: (0.014, 0.045), 3: (0.018, 0.051)}[args.param]
+    F, k = FK[args.param]
+DIRICHLET = args.bc == "dirichlet" and not args.synthetic
+END = "natural" if DIRICHLET else "clamped"
 N = args.N; hx, hy = (xs[-1] - xs[0]) / N, (ys[-1] - ys[0]) / N
 xc = xs[0] + (np.arange(N) + 0.5) * hx; yc = ys[0] + (np.arange(N) + 0.5) * hy
-Qx, Qy, Px, Py = map(T32, (spline_matrix(xs, xc), spline_matrix(ys, yc), spline_matrix(xc, xs), spline_matrix(yc, ys)))
+if DIRICHLET:   # fine -> data through the wall values u = v = 0
+    Px_, Py_ = (spline_matrix(np.r_[xs[0], xc, xs[-1]], xs, END)[:, 1:-1], spline_matrix(np.r_[ys[0], yc, ys[-1]], ys, END)[:, 1:-1])
+else:
+    Px_, Py_ = spline_matrix(xc, xs), spline_matrix(yc, ys)
+Qx, Qy, Px, Py = map(T32, (spline_matrix(xs, xc, END), spline_matrix(ys, yc, END), Px_, Py_))
 Ud, Vd = T32(U), T32(V); sig_u, sig_v = float(U.std()), float(V.std())
 use_fine = getattr(args, "start", "data") == "fine"
 if use_fine:
@@ -59,7 +67,7 @@ class Du_net(nn.Module):
 Du_nn = Du_net().to(dev); Du_nn.load_state_dict(ck["Du_nn"])
 Dv_learned = D_SCALE * nn.functional.softplus(ck["Dv_nn"]["Dv_raw"]).item()
 
-if args.order == 2:
+if args.order == 2 and not DIRICHLET:
     fx_x, fx_y = xs[0] + np.arange(1, N) * hx, yc; fy_x, fy_y = xc, ys[0] + np.arange(1, N) * hy
 else:
     fx_x, fx_y = xs[0] + np.arange(0, N + 1) * hx, yc; fy_x, fy_y = xc, ys[0] + np.arange(0, N + 1) * hy
@@ -68,9 +76,10 @@ def net_on(xv, yv):
     X, Y = torch.meshgrid(T32(xv), T32(yv), indexing="ij")
     with torch.no_grad(): return Du_nn(torch.stack([norm(X, xs[0], xs[-1]), norm(Y, ys[0], ys[-1])], -1))[..., 0]
 def true_on(xv, yv):
-    X, Y = np.meshgrid(xv, yv, indexing="ij"); return T32(2e-5 * (1 + np.sin(np.pi * X) * np.sin(np.pi * Y)))
+    X, Y = np.meshgrid(xv, yv, indexing="ij"); return T32(Du_true(X, Y, 1 if args.synthetic else args.dcase))
 L = (net_on(fx_x, fx_y), net_on(fy_x, fy_y)); Tr = (true_on(fx_x, fx_y), true_on(fy_x, fy_y))
-div = (lambda u, p, q: divflux2(u, p, q, hx, hy)) if args.order == 2 else (lambda u, p, q: divflux4(u, p, q, hx, hy))
+div = ((lambda u, p, q: divflux2(u, p, q, hx, hy, DIRICHLET)) if args.order == 2 else
+       (lambda u, p, q: divflux4(u, p, q, hx, hy, DIRICHLET)))
 
 i_lo = int(np.searchsorted(tdat, args.t_start)); i_hi = len(tdat) - 1 - args.horizon
 starts = torch.arange(i_lo, i_hi + 1, a.every)

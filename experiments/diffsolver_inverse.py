@@ -18,6 +18,7 @@ WHY (see experiments/README.md for the full diagnosis):
 Usage (GPU):
   python experiments/diffsolver_inverse.py --param 1
   python experiments/diffsolver_inverse.py --param 3 --N 192 --iters 3000
+  python experiments/diffsolver_inverse.py --param 4 --bc dirichlet --dcase 4   # data/dirichlet/D4/fk4
 """
 import argparse, json, math, os, time
 import numpy as np
@@ -27,17 +28,17 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gs_solver import spline_matrix, divflux2 as _df2, divflux4 as _df4, STAB as _STAB
+from gs_data import add_data_args, load, Du_true as _Du_true, case_tag, FK
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-FK = {1: (0.037, 0.06), 2: (0.014, 0.045), 3: (0.018, 0.051)}
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--param", type=int, default=1)
+add_data_args(ap)   # --param (F,k) 1-4, --bc noflux|dirichlet, --dcase 1|3|4|6
 ap.add_argument("--F", type=float, default=None, help="override feed rate")
 ap.add_argument("--k", type=float, default=None, help="override kill rate")
-ap.add_argument("--data", type=str, default=None, help="path to COMSOL txt (default data/param{param}/D1/data_{param}.txt)")
+ap.add_argument("--data", type=str, default=None, help="explicit data file, npz or COMSOL txt (default data/<bc>/D<dcase>/fk<param>/...)")
 ap.add_argument("--N", type=int, default=160, help="fine solver grid (N x N cells)")
 ap.add_argument("--horizon", type=int, default=2, help="window length in data intervals (x10 time units)")
 ap.add_argument("--order", type=int, default=4, choices=[2, 4], help="spatial order of the solver")
@@ -61,7 +62,6 @@ ap.add_argument("--time_stride", type=int, default=1, help="sparse in time: keep
 ap.add_argument("--time_frac", type=float, default=1.0, help="irregular in time: keep this random fraction of snapshots")
 ap.add_argument("--horizon_t", type=float, default=None,
                 help="window length in time units (default horizon*10); every kept snapshot inside is scored")
-ap.add_argument("--cache", type=str, default=None, help="npz cache dir (default experiments/cache)")
 ap.add_argument("--out", type=str, default=None)
 ap.add_argument("--tag", type=str, default="")
 args = ap.parse_args()
@@ -71,32 +71,20 @@ dev = torch.device(args.device)
 F, k = FK.get(args.param, (None, None))
 F = args.F if args.F is not None else F
 k = args.k if args.k is not None else k
-out_dir = args.out or os.path.join(HERE, "results", (f"synthetic_p{args.param}_start-{args.start}_N{args.N}_o{args.order}{args.tag}" if args.synthetic else f"diffsolver_p{args.param}_N{args.N}_H{args.horizon}_o{args.order}_{args.weight}{args.tag}"))
+out_dir = args.out or os.path.join(HERE, "results", (f"synthetic_p{args.param}_start-{args.start}_N{args.N}_o{args.order}{args.tag}" if args.synthetic else f"diffsolver_p{args.param}{case_tag(args.bc, args.dcase)}_N{args.N}_H{args.horizon}_o{args.order}_{args.weight}{args.tag}"))
 sparse_tag = ("" if (args.sensor_spacing <= 0 and args.time_stride == 1 and args.time_frac >= 1) else
               f"_sp{args.sensor_spacing:g}_ts{args.time_stride}_tf{args.time_frac:g}")
 if args.out is None: out_dir += sparse_tag
 os.makedirs(out_dir, exist_ok=True)
-print(f"device {dev} | case {args.param} F={F} k={k} | out {out_dir}", flush=True)
+DIRICHLET = args.bc == "dirichlet" and not args.synthetic
+SPL_END = "natural" if DIRICHLET else "clamped"
+print(f"device {dev} | case {args.param} F={F} k={k} | bc {args.bc} | true Du D{args.dcase} | out {out_dir}", flush=True)
 
 # ------------------------------------------------------------------ data
 def load_grid():
-    cache_dir = args.cache or os.path.join(HERE, "cache")
-    os.makedirs(cache_dir, exist_ok=True)
-    src = args.data or os.path.join(ROOT, "data", f"param{args.param}", "D1", f"data_{args.param}.txt")
-    cpath = os.path.join(cache_dir, os.path.basename(src).replace(".txt", "_grid.npz"))
-    if os.path.exists(cpath):
-        g = np.load(cpath); return g["xs"], g["ys"], g["t"], g["U"], g["V"]
-    a = np.loadtxt(src, comments="%")
-    xy, f = a[:, :2], a[:, 2:]
-    xs = np.unique(np.round(xy[:, 0], 12)); ys = np.unique(np.round(xy[:, 1], 12))
-    assert len(xs) * len(ys) == len(xy), "data is not on a tensor-product grid"
-    ix = np.searchsorted(xs, np.round(xy[:, 0], 12)); iy = np.searchsorted(ys, np.round(xy[:, 1], 12))
-    nt = f.shape[1] // 2
-    U = np.zeros((nt, len(xs), len(ys))); V = np.zeros_like(U)
-    U[:, ix, iy] = f[:, 0::2].T; V[:, ix, iy] = f[:, 1::2].T
-    t = np.arange(nt) * 10.0
-    np.savez(cpath, xs=xs, ys=ys, t=t, U=U, V=V)
-    return xs, ys, t, U, V
+    d = load(args.param, args.bc, args.dcase, path=args.data)
+    print("data", d["path"], flush=True)
+    return d["xs"], d["ys"], d["t"], d["U"], d["V"]
 
 if args.synthetic:
     syn = np.load(args.synthetic)
@@ -127,8 +115,12 @@ xc = xs[0] + (np.arange(N) + 0.5) * hx
 yc = ys[0] + (np.arange(N) + 0.5) * hy
 
 # linear (cubic-spline) interpolation operators: data grid <-> solver cell centres
-Qx, Qy = spline_matrix(xs, xc), spline_matrix(ys, yc)                # data -> fine
-Px, Py = spline_matrix(xc, xs), spline_matrix(yc, ys)                # fine -> data
+Qx, Qy = spline_matrix(xs, xc, SPL_END), spline_matrix(ys, yc, SPL_END)      # data -> fine
+if DIRICHLET:   # fine -> data through the known wall values u = v = 0 (wall columns dropped: they multiply 0)
+    Px = spline_matrix(np.r_[xs[0], xc, xs[-1]], xs, SPL_END)[:, 1:-1]
+    Py = spline_matrix(np.r_[ys[0], yc, ys[-1]], ys, SPL_END)[:, 1:-1]
+else:
+    Px, Py = spline_matrix(xc, xs), spline_matrix(yc, ys)                # fine -> data
 T32 = lambda a: torch.tensor(a, dtype=torch.float32, device=dev)
 Qx, Qy, Px, Py = map(T32, (Qx, Qy, Px, Py))
 Ud, Vd = T32(U), T32(V)
@@ -162,15 +154,16 @@ Du_nn, Dv_nn = Du_net().to(dev), Dv_net().to(dev)
 def grid_in(xv, yv):
     X, Y = torch.meshgrid(T32(xv), T32(yv), indexing="ij")
     return torch.stack([norm(X, xs[0], xs[-1]), norm(Y, ys[0], ys[-1])], -1)
-if args.order == 2:
+if args.order == 2 and not DIRICHLET:
     Xface_x = grid_in(xs[0] + np.arange(1, N) * hx, yc)   # (N-1, N): interior faces in x
     Xface_y = grid_in(xc, ys[0] + np.arange(1, N) * hy)   # (N, N-1)
-else:   # 4th order: all faces m*h, m=0..N (walls included)
+else:   # 4th order, or Dirichlet walls: all faces m*h, m=0..N (walls included)
     Xface_x = grid_in(xs[0] + np.arange(0, N + 1) * hx, yc)   # (N+1, N)
     Xface_y = grid_in(xc, ys[0] + np.arange(0, N + 1) * hy)   # (N, N+1)
 
 # ------------------------------------------------------------------ solver
-divflux = (lambda u, a, b: _df2(u, a, b, hx, hy)) if args.order == 2 else (lambda u, a, b: _df4(u, a, b, hx, hy))
+divflux = ((lambda u, a, b: _df2(u, a, b, hx, hy, DIRICHLET)) if args.order == 2 else
+           (lambda u, a, b: _df4(u, a, b, hx, hy, DIRICHLET)))
 STAB = _STAB[args.order]
 
 def rollout(u, v, Dfx, Dfy, Dv, n_sub, dt):
@@ -228,7 +221,7 @@ def window_loss(starts):
 
 # ------------------------------------------------------------------ monitoring (true D used ONLY for reporting)
 Xm, Ym = np.meshgrid(xs_full, ys_full, indexing="ij")
-Du_true = 2e-5 * (1 + np.sin(np.pi * Xm) * np.sin(np.pi * Ym))
+Du_true = _Du_true(Xm, Ym, int(syn["dcase"]) if args.synthetic and "dcase" in syn.files else (1 if args.synthetic else args.dcase))
 Xdat = grid_in(xs_full, ys_full)
 @torch.no_grad()
 def Du_on_data(): return Du_nn(Xdat)[..., 0].cpu().numpy()
@@ -259,7 +252,7 @@ for it in range(1, args.iters + 1):
 
 # ------------------------------------------------------------------ outputs
 Dp = Du_on_data(); Lp = L_paper(Dp)
-res = dict(case=args.param, F=F, k=k, N=N, horizon=args.horizon, iters_run=it, time_s=time.time() - t0,
+res = dict(case=args.param, bc=args.bc, dcase=args.dcase, F=F, k=k, N=N, horizon=args.horizon, iters_run=it, time_s=time.time() - t0,
            Du_Lpaper_pct=100 * Lp, Du_rel_L2_pct=100 * float(np.linalg.norm(Dp - Du_true) / np.linalg.norm(Du_true)),
            Dv=Dv_nn.value().item(), Dv_rel_err_pct=100 * (Dv_nn.value().item() / 1e-5 - 1), final_loss_ema=ema,
            sensors=f"{len(xs)}x{len(ys)}", sensor_max_spacing=float(np.diff(xs).max()), snapshots_kept=int(len(kept)),
